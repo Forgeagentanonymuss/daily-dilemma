@@ -137,7 +137,7 @@ body.dd-game {
 /* ── Icons ───────────────────────────────────────────── */
 
 .ico, .ico-action, .ico-btn, .ico-flame, .ico-chev, .ico-chip, .ico-lock,
-.ico-lock-overlay, .ico-check, .ico-star, .ico-lg, .ico-bolt-reveal, .ico-cat, .ico-ach, .ico-ach-lock {
+.ico-lock-overlay, .ico-check, .ico-star, .ico-lg, .ico-bolt-reveal, .ico-cat, .ico-ach, .ico-ach-lock, .ico-social {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -146,7 +146,7 @@ body.dd-game {
 
 .ico svg, .ico-action svg, .ico-btn svg, .ico-flame svg, .ico-chev svg, .ico-chip svg,
 .ico-lock svg, .ico-lock-overlay svg, .ico-check svg, .ico-star svg, .ico-lg svg, .ico-bolt-reveal svg,
-.ico-cat svg, .ico-ach svg, .ico-ach-lock svg {
+.ico-cat svg, .ico-ach svg, .ico-ach-lock svg, .ico-social svg {
   width: 100%;
   height: 100%;
 }
@@ -163,6 +163,8 @@ body.dd-game {
 .ico-lg { width: 30px; height: 30px; color: var(--gold-deep); }
 .ico-cat { width: 52px; height: 52px; }
 .ico-ach { width: 40px; height: 40px; }
+.ico-social { width: 24px; height: 24px; }
+
 .ico-ach-lock {
   position: absolute;
   right: -2px;
@@ -1535,6 +1537,71 @@ body.dd-game {
 
 .copy-link-btn.full { width: 100%; margin-bottom: 8px; }
 
+.social-share-section {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.social-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.social-share-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 68px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ink);
+  transition: transform 0.15s var(--ease), border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.social-share-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.social-share-btn:active { transform: scale(0.97); }
+
+.social-share-ico { width: 24px; height: 24px; }
+
+.social-share-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.social-share-btn.social-facebook { color: #1877f2; }
+.social-share-btn.social-facebook:hover { border-color: rgba(24, 119, 242, 0.45); }
+
+.social-share-btn.social-instagram { color: #c13584; }
+.social-share-btn.social-instagram:hover { border-color: rgba(193, 53, 132, 0.4); }
+
+.social-share-btn.social-x { color: #141414; }
+.social-share-btn.social-x:hover { border-color: rgba(20, 20, 20, 0.25); }
+
+.social-share-btn.social-whatsapp { color: #25d366; }
+.social-share-btn.social-whatsapp:hover { border-color: rgba(37, 211, 102, 0.45); }
+
+.social-share-btn.social-linkedin { color: #0a66c2; }
+.social-share-btn.social-linkedin:hover { border-color: rgba(10, 102, 194, 0.45); }
+
+.social-share-hint {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .copy-link-btn,
 .copy-msg-btn {
   white-space: nowrap;
@@ -1707,6 +1774,7 @@ body.dd-game {
 @media (max-width: 400px) {
   .share-link-row { grid-template-columns: 1fr; }
   .copy-link-btn { width: 100%; }
+  .social-share-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 360px) {

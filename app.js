@@ -87,7 +87,20 @@ const ICONS = {
   ach_explorer: '<svg viewBox="0 0 48 48" fill="none"><rect x="10" y="10" width="28" height="28" rx="4" fill="#e8f0ec" stroke="#4d7d6e" stroke-width="1.75"/><rect x="14" y="14" width="8" height="8" rx="2" fill="#fff8e8" stroke="#f4c95f" stroke-width="1.5"/><rect x="26" y="14" width="8" height="8" rx="2" fill="#e8f0ec" stroke="#4d7d6e" stroke-width="1.5"/><rect x="14" y="26" width="8" height="8" rx="2" fill="#e8f0ec" stroke="#4d7d6e" stroke-width="1.5"/><rect x="26" y="26" width="8" height="8" rx="2" fill="#fff8e8" stroke="#f4c95f" stroke-width="1.5"/><path d="M24 8v4M24 36v4M8 24h4M36 24h4" stroke="#d4a84a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>',
   ach_total_50: '<svg viewBox="0 0 48 48" fill="none"><path d="M14 14h20v6a8 8 0 01-16 0v-6z" fill="#fff8e8" stroke="#f4c95f" stroke-width="1.75"/><path d="M12 14H10v2a4 4 0 004 4M36 14h2v2a4 4 0 01-4 4" stroke="#4d7d6e" stroke-width="1.75" stroke-linecap="round"/><path d="M24 28v4M18 36h12" stroke="#4d7d6e" stroke-width="1.75" stroke-linecap="round"/><rect x="17" y="32" width="14" height="4" rx="2" fill="#e8f0ec" stroke="#4d7d6e" stroke-width="1.5"/><circle cx="24" cy="10" r="3" fill="#f4c95f" opacity="0.5"/></svg>',
   ach_premium: '<svg viewBox="0 0 48 48" fill="none"><path d="M24 8l3.5 8.5 9 1-6.5 5.5 2 8.5-8-4.5-8 4.5 2-8.5-6.5-5.5 9-1L24 8z" fill="#fff8e8" stroke="#f4c95f" stroke-width="1.75" stroke-linejoin="round"/><circle cx="24" cy="24" r="14" fill="none" stroke="#4d7d6e" stroke-width="1.75" opacity="0.35"/><path d="M24 3v3M24 42v3M3 24h3M42 24h3" stroke="#d4a84a" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/></svg>',
+  social_fb: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.41H7.08v-3.53h3.05V9.43c0-3 1.79-4.66 4.53-4.66 1.31 0 2.68.23 2.68.23v2.95h-1.51c-1.49 0-1.95.92-1.95 1.87v2.25h3.32l-.53 3.53h-2.79V24C19.61 23.1 24 18.1 24 12.07z"/></svg>',
+  social_ig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  social_x: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.5 22h-6.7l-5.2-6.8L5.8 22H2.7l7.3-8.4L1 2h6.9l4.7 6.2L18.9 2zm-1.2 18h1.7L7.2 3.9H5.4l12.3 16.1z"/></svg>',
+  social_wa: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.5 2 2 6.06 2 11.25c0 2.73 1.09 5.19 2.84 7.01L3.5 22l3.93-1.28A9.8 9.8 0 0012.04 20.5C17.58 20.5 22 16.44 22 11.25S17.58 2 12.04 2zm0 1.8c4.55 0 8.24 3.56 8.24 7.95 0 4.39-3.69 7.95-8.24 7.95a8.1 8.1 0 01-4.1-1.12l-.29-.17-2.33.76.77-2.27-.19-.3a7.5 7.5 0 01-1.17-4.05c0-4.39 3.69-7.95 8.24-7.95zm-2.9 3.78c-.17 0-.5.06-.76.3-.26.24-1 1-1 2.43 0 1.43 1.03 2.81 1.17 3 .14.2 2 3.2 5 4.36 2.47.97 2.97.78 3.5.73.53-.05 1.72-.7 1.96-1.38.24-.68.24-1.26.17-1.38-.07-.12-.26-.2-.55-.35-.29-.14-1.72-.85-1.99-.95-.26-.1-.46-.15-.65.15-.2.29-.75.95-.92 1.14-.17.2-.34.22-.63.07-.29-.14-1.23-.45-2.34-1.44-.87-.77-1.45-1.72-1.62-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.34.43-.51.14-.17.19-.29.29-.48.1-.2.05-.37-.02-.51-.07-.14-.65-1.57-.89-2.15z"/></svg>',
+  social_li: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 0H3.55A3.55 3.55 0 000 3.55v16.9A3.55 3.55 0 003.55 24h16.9A3.55 3.55 0 0024 20.45V3.55A3.55 3.55 0 0020.45 0zM7.12 20.45H3.56V9h3.56v11.45zM5.34 7.43a2.07 2.07 0 110-4.14 2.07 2.07 0 010 4.14zm15.11 13.02h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.95v5.66H9.44V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28z"/></svg>',
 };
+
+const SOCIAL_PLATFORMS = [
+  { id: "facebook", label: "Facebook", icon: "social_fb" },
+  { id: "whatsapp", label: "WhatsApp", icon: "social_wa" },
+  { id: "x", label: "X", icon: "social_x" },
+  { id: "linkedin", label: "LinkedIn", icon: "social_li" },
+  { id: "instagram", label: "Instagram", icon: "social_ig" },
+];
 
 const ACTION_CARDS = [
   { action: "quick-play", icon: "bolt", title: "Quick Play", desc: "Lightning-round dilemmas", badge: true },
@@ -203,6 +216,16 @@ function buildResultShareUrl() {
   } catch {
     return location.href.split("?")[0];
   }
+}
+
+function buildSocialShareUrls(message, url) {
+  const payload = `${message}\n\nPlay at: ${url}`;
+  return {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(payload)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(payload)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  };
 }
 
 /* ── State ───────────────────────────────────────────────────────── */
@@ -674,22 +697,91 @@ function buildResultSharePayload(dilemma, choice, pctA, mode) {
   return `${text}\n\nPlay at: ${url}`;
 }
 
+function recordShareAction(label) {
+  app.state.shareCount = (app.state.shareCount || 0) + 1;
+  const unlocked = [];
+  checkAchievements(app.state, app.dilemmas, unlocked);
+  saveState(app.state);
+  if (unlocked.length) launchConfetti();
+  showToast(label);
+}
+
+function openExternalShare(url, platform) {
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  if (!win) {
+    showToast(`Allow popups to share on ${platform}, or use Copy`);
+    return false;
+  }
+  return true;
+}
+
+function socialShareButtonsHtml() {
+  return `<div class="social-share-section">
+    <span class="field-label">Share on social</span>
+    <div class="social-share-grid">
+      ${SOCIAL_PLATFORMS.map((p) => `
+        <button type="button" class="social-share-btn social-${p.id}" data-social="${p.id}" aria-label="Share on ${p.label}">
+          <span class="social-share-ico">${icon(p.icon, "ico-social")}</span>
+          <span class="social-share-label">${p.label}</span>
+        </button>`).join("")}
+    </div>
+    <p class="social-share-hint soft">Instagram has no web share — tap it to copy your caption, then paste in Stories or a DM.</p>
+  </div>`;
+}
+
+function bindSocialShareButtons(backdrop, getPayload, getShareParts) {
+  backdrop.querySelectorAll("[data-social]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const platform = btn.dataset.social;
+      const { message, url } = getShareParts();
+      const payload = getPayload();
+      const links = buildSocialShareUrls(message, url);
+
+      if (platform === "instagram") {
+        copyText(payload, btn, () => {
+          recordShareAction("Caption copied — paste in Instagram");
+        }, { silentFail: true });
+        return;
+      }
+
+      const link = links[platform];
+      if (!link) return;
+      const label = SOCIAL_PLATFORMS.find((p) => p.id === platform)?.label || platform;
+      if (openExternalShare(link, label)) {
+        recordShareAction(`Opening ${label}…`);
+      }
+    });
+  });
+}
+
 function showResultShareModal(dilemma, choice, pctA, mode) {
+  const message = shareText(dilemma, choice, pctA, mode);
+  const url = buildResultShareUrl();
   const payload = buildResultSharePayload(dilemma, choice, pctA, mode);
   const backdrop = openModal("Share your pick", `
-    <p class="modal-lead">Copy your result and send it to friends — they'll land on <strong>the-daily-dilemma.com</strong>.</p>
+    <p class="modal-lead">Send your result to friends — they'll land on <strong>the-daily-dilemma.com</strong>.</p>
+    ${socialShareButtonsHtml()}
     <label class="field share-message-field">
       <span class="field-label">Your share message</span>
       <textarea class="input share-message-input share-message-editable" id="resultShareText" rows="5">${escapeHtml(payload)}</textarea>
     </label>
     <button type="button" class="btn primary glow copy-link-btn full" id="resultShareCopy">${icon("share", "ico-btn")} Copy to clipboard</button>
-    <p class="share-trust-note soft">${icon("share", "ico-chip")} Paste in a text, DM, or post. On mobile, you can also long-press the text above and tap Copy.</p>`,
+    <p class="share-trust-note soft">${icon("share", "ico-chip")} Or paste anywhere — text, DM, or group chat.</p>`,
   `<button class="btn ghost" data-close>Done</button>`,
   { premium: true });
   backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
   const ta = backdrop.querySelector("#resultShareText");
   const copyBtn = backdrop.querySelector("#resultShareCopy");
   const readPayload = () => ta?.value || payload;
+  const getShareParts = () => {
+    const full = readPayload();
+    const marker = "\n\nPlay at: ";
+    const idx = full.lastIndexOf(marker);
+    if (idx >= 0) {
+      return { message: full.slice(0, idx), url: full.slice(idx + marker.length) || url };
+    }
+    return { message: shareText(dilemma, choice, pctA, mode), url };
+  };
   const selectAll = () => {
     ta?.focus();
     ta?.select();
@@ -699,6 +791,7 @@ function showResultShareModal(dilemma, choice, pctA, mode) {
   copyBtn?.addEventListener("click", () => {
     copyText(readPayload(), copyBtn, () => finishResultShare(copyBtn), { silentFail: true });
   });
+  bindSocialShareButtons(backdrop, readPayload, getShareParts);
   requestAnimationFrame(selectAll);
 }
 
@@ -1714,7 +1807,7 @@ if (typeof module !== "undefined" && module.exports) {
     migrateState, computeStats, computePersonality, getQuickPlayRemaining, dayGap,
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
-    buildResultShareUrl, getShareSiteUrl,
+    buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls,
   };
 } else {
   init().catch((e) => {

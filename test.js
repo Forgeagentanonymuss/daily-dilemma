@@ -7,6 +7,7 @@ const {
   migrateState, computeStats, computePersonality, getQuickPlayRemaining,
   dayGap, defaultState, QUICK_FREE_LIMIT,
   encodeSharePayload, decodeSharePayload, customShareMessage,
+  buildResultShareUrl, getShareSiteUrl,
 } = require("./app.js");
 
 const dilemmas = JSON.parse(
@@ -95,5 +96,8 @@ assert.equal(decodeSharePayload(encodeSharePayload({ category: "nope", a: "x", b
 
 const msg = customShareMessage(sample);
 assert.ok(msg.includes("Duck-sized horse"), "share message mentions dilemma");
+
+assert.equal(getShareSiteUrl(), "https://the-daily-dilemma.com/play", "default share site");
+assert.equal(buildResultShareUrl(), "https://the-daily-dilemma.com/play", "result share url is canonical play page");
 
 console.log(`OK — ${dilemmas.length} dilemmas, index today=${i1} id=${dilemmas[i1].id}`);

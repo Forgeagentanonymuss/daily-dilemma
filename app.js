@@ -25,44 +25,7 @@ const QUICK_FREE_LIMIT = 5;
 const FREE_CUSTOM_LIMIT = 2;
 const CATEGORY_SESSION_SIZE = 4;
 const PREMIUM_SHIELDS = 3;
-
-/* ── Per-page premium config ─────────────────────────────────────────
- * Premium is decided by the PAGE the game is embedded on, not by the
- * browser. The Squarespace members page (gated by a paywall) sets
- * forcePremium:true; the free public page leaves it false. Because the
- * paywall is what controls who reaches the premium page, there is no
- * client-side "unlock" to fake.
- *
- * Set this on the host page BEFORE app.js loads, e.g.:
- *   <script>
- *     window.DAILY_DILEMMA_CONFIG = {
- *       forcePremium: true,                       // members page only
- *       subscribeUrl: "https://YOURSITE.com/join",// where the free upsell sends people
- *       priceHint: "$2.99/mo"                     // shown in the upsell
- *     };
- *   </script>
- */
-function ddConfig() {
-  return (typeof window !== "undefined" && window.DAILY_DILEMMA_CONFIG) || {};
-}
-
-function isPremiumPage() {
-  const cfg = ddConfig();
-  if (cfg.forcePremium === true) return true;
-  try {
-    if (new URLSearchParams(location.search).get("premium") === "1") return true;
-  } catch {}
-  return false;
-}
-
-function subscribeUrl() {
-  if (ddConfig().subscribeUrl) return ddConfig().subscribeUrl;
-  try {
-    const j = new URLSearchParams(location.search).get("join");
-    if (j) return j;
-  } catch {}
-  return "";
-}
+const SHARE_SITE_URL = "https://the-daily-dilemma.com/play";
 
 const CATEGORIES = [
   { id: "family", label: "Family", icon: "cat_family", blurb: "Table-friendly debates" },
@@ -222,6 +185,24 @@ function shareText(dilemma, choice, pctA, mode = "daily") {
   const picked = choice === "a" ? dilemma.a : dilemma.b;
   const prefix = mode === "daily" ? "Daily Dilemma" : "Daily Dilemma Quick Play";
   return `${prefix} · I picked: "${picked}" (${pctA}% chose A)`;
+}
+
+function getShareSiteUrl() {
+  if (typeof window !== "undefined" && window.DD_SHARE_URL) {
+    return String(window.DD_SHARE_URL);
+  }
+  return SHARE_SITE_URL;
+}
+
+function buildResultShareUrl() {
+  try {
+    const url = new URL(getShareSiteUrl());
+    url.searchParams.delete("share");
+    url.searchParams.delete("reset");
+    return url.href;
+  } catch {
+    return location.href.split("?")[0];
+  }
 }
 
 /* ── State ───────────────────────────────────────────────────────── */
@@ -628,12 +609,7 @@ function markCopyButtonCopied(btn, doneLabel = "Copied!") {
   }, 2200);
 }
 
-function copyText(text, btn, onDone) {
-  const done = () => { onDone?.(btn); };
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).then(done).catch(() => showToast("Could not copy"));
-    return;
-  }
+function copyViaExecCommand(text, onSuccess, onFail) {
   const ta = document.createElement("textarea");
   ta.value = text;
   ta.setAttribute("readonly", "");
@@ -641,13 +617,55 @@ function copyText(text, btn, onDone) {
   ta.style.left = "-9999px";
   document.body.appendChild(ta);
   ta.select();
+  let ok = false;
   try {
-    document.execCommand("copy");
-    done();
+    ok = document.execCommand("copy");
   } catch {
-    showToast("Could not copy");
+    ok = false;
   }
   ta.remove();
+  if (ok) onSuccess?.();
+  else onFail?.();
+}
+
+function copyText(text, btn, onDone) {
+  const done = () => { onDone?.(btn); };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(done)
+      .catch(() => copyViaExecCommand(text, done, () => showShareFallbackModal(text)));
+    return;
+  }
+  copyViaExecCommand(text, done, () => showShareFallbackModal(text));
+}
+
+function finishResultShare(btn, label = "Copied!") {
+  app.state.shareCount = (app.state.shareCount || 0) + 1;
+  const unlocked = [];
+  checkAchievements(app.state, app.dilemmas, unlocked);
+  saveState(app.state);
+  if (btn) markCopyButtonCopied(btn, label);
+  showToast(label === "Shared!" ? "Shared!" : "Copied — spread the debate!");
+  if (unlocked.length) launchConfetti();
+}
+
+function showShareFallbackModal(text) {
+  const backdrop = openModal("Copy your pick", `
+    <p class="modal-lead">Your browser blocked automatic copy. Select the text below and copy it manually.</p>
+    <textarea class="input share-message-input" id="shareFallbackText" rows="4">${escapeHtml(text)}</textarea>
+    <p class="soft">Paste it in a message, post, or group chat to invite friends.</p>`,
+  `<button class="btn ghost" data-close>Close</button>
+   <button class="btn primary glow" id="shareFallbackRetry">Try copy again</button>`);
+  backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
+  const ta = backdrop.querySelector("#shareFallbackText");
+  ta?.addEventListener("focus", () => ta.select());
+  backdrop.querySelector("#shareFallbackRetry")?.addEventListener("click", () => {
+    copyText(text, null, () => {
+      backdrop.remove();
+      finishResultShare(null);
+    });
+  });
+  requestAnimationFrame(() => ta?.select());
 }
 
 function recordPlay(state, dilemma, choice, mode, today = dateKey()) {
@@ -760,7 +778,7 @@ function premiumBenefitsHtml() {
   return `<ul class="benefits">
     ${items.map((t) => `<li>${icon("check", "ico-check")}<span>${t}</span></li>`).join("")}
   </ul>
-  <p class="price-hint">${escapeHtml(ddConfig().priceHint || "$2.99/mo")}</p>`;
+  <p class="price-hint"><strong>$2.99/mo</strong> · $19.99/yr · $39.99 lifetime</p>`;
 }
 
 function bindChoicePress(root) {
@@ -772,17 +790,31 @@ function bindChoicePress(root) {
   });
 }
 
-function showUpsellModal() {
-  const url = subscribeUrl();
-  const cta = url
-    ? `<a class="btn premium-cta" href="${escapeHtml(url)}" target="_top" rel="noopener">${icon("spark", "ico-btn")} Go Premium</a>`
-    : `<button class="btn premium-cta" disabled title="Set subscribeUrl in DAILY_DILEMMA_CONFIG">${icon("spark", "ico-btn")} Coming soon</button>`;
+function unlockPremiumDemo(state, onDone) {
+  state.isPremium = true;
+  state.shields = PREMIUM_SHIELDS;
+  saveState(state);
+  checkAchievements(state, app.dilemmas, []);
+  openModal("You're Premium! 🎉", `<p class="modal-lead">Demo unlock active. Enjoy unlimited Quick Play, custom dilemmas in the pool, and streak shields.</p>`, `
+    <button class="btn premium-cta full" data-close>${icon("spark", "ico-btn")} Let's go</button>`, { premium: true });
+  launchConfetti();
+  document.querySelector("[data-close]")?.addEventListener("click", () => {
+    document.querySelector(".modal-backdrop")?.remove();
+    onDone?.();
+  });
+}
+
+function showUpsellModal(onUnlock) {
   const backdrop = openModal("Unlock the full experience", `
     <p class="modal-lead">Play without limits. Create dilemmas. Protect your streak.</p>
     ${premiumBenefitsHtml()}`, `
     <button class="btn ghost" data-close>Maybe later</button>
-    ${cta}`, { premium: true });
+    <button class="btn premium-cta" data-unlock>${icon("spark", "ico-btn")} Unlock Premium (Demo)</button>`, { premium: true });
   backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
+  backdrop.querySelector("[data-unlock]")?.addEventListener("click", () => {
+    backdrop.remove();
+    unlockPremiumDemo(app.state, onUnlock);
+  });
 }
 
 /* ── App shell ─────────────────────────────────────────────────────── */
@@ -846,6 +878,7 @@ function devBarHtml() {
       <span>Test mode · random daily reset</span>
       <button type="button" class="dev-btn" data-dev="today">New daily</button>
       <button type="button" class="dev-btn" data-dev="all">Reset all</button>
+      <button type="button" class="dev-btn" data-dev="premium">Toggle premium</button>
     </div>`;
 }
 
@@ -853,6 +886,13 @@ function bindDevBar() {
   if (!isDevHost()) return;
   app.root.querySelectorAll("[data-dev]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (btn.dataset.dev === "premium") {
+        app.state.isPremium = !app.state.isPremium;
+        if (app.state.isPremium) app.state.shields = PREMIUM_SHIELDS;
+        saveState(app.state);
+        render();
+        return;
+      }
       resetState(btn.dataset.dev, app.today, { total: app.dilemmas.length, avoidIdx: app.state.devIdx });
       location.reload();
     });
@@ -1340,18 +1380,25 @@ function renderSettings() {
       ${headerHtml("Settings")}
       ${backRow("Home")}
       <div class="card-panel settings section-card">
-        <div class="settings-row"><span>Premium</span><strong>${state.isPremium ? "Active" : "Free tier"}</strong></div>
+        <div class="settings-row"><span>Premium</span><strong>${state.isPremium ? "Active (demo)" : "Free tier"}</strong></div>
         <div class="settings-row"><span>Streak shields</span><strong>${state.shields}</strong></div>
         <div class="settings-row"><span>Custom dilemmas</span><strong>${state.customDilemmas.length}</strong></div>
-        ${state.isPremium
-          ? `<button type="button" class="btn ghost full" disabled>Premium active</button>`
-          : `<button type="button" class="btn premium-cta full" data-nav="upsell">${icon("spark", "ico-btn")} Go Premium</button>`}
+        <button type="button" class="btn ${state.isPremium ? "ghost" : "premium-cta"} full" data-nav="upsell">
+          ${state.isPremium ? "Premium active" : `${icon("spark", "ico-btn")} Unlock Premium (Demo)`}
+        </button>
+        ${state.isPremium ? `<button type="button" class="btn ghost full" id="revokePremium">Turn off demo premium</button>` : ""}
         <button type="button" class="btn ghost full" id="clearData">Clear all local data</button>
       </div>
       ${devBarHtml()}
     </div>`;
   bindCommon();
   bindDevBar();
+  document.getElementById("revokePremium")?.addEventListener("click", () => {
+    state.isPremium = false;
+    saveState(state);
+    showToast("Demo premium off");
+    render();
+  });
   document.getElementById("clearData")?.addEventListener("click", () => {
     if (confirm("Clear all progress?")) {
       resetState("all");
@@ -1534,24 +1581,29 @@ function showCreateModal() {
 
 function doShare(btn, dilemma, choice, pctA, mode) {
   const d = dilemma || app.session?.dilemma;
-  const c = choice || app.state.daily[app.today]?.choice;
-  const p = pctA || app.state.daily[app.today]?.pctA;
-  if (!d || !c) return;
-  const text = shareText(d, c, p, mode);
-  const finish = () => {
-    app.state.shareCount = (app.state.shareCount || 0) + 1;
-    const unlocked = [];
-    checkAchievements(app.state, app.dilemmas, unlocked);
-    saveState(app.state);
-    if (btn) btn.textContent = "Copied!";
-    showToast("Shared!");
-    if (unlocked.length) launchConfetti();
-  };
-  if (navigator.share) {
-    navigator.share({ title: "Daily Dilemma", text, url: location.href }).then(finish).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(`${text} ${location.href}`).then(finish);
+  const c = choice ?? app.state.daily[app.today]?.choice;
+  const p = pctA ?? app.state.daily[app.today]?.pctA;
+  if (!d || !c) {
+    showToast("Nothing to share yet");
+    return;
   }
+  const text = shareText(d, c, p, mode);
+  const url = buildResultShareUrl();
+  const payload = `${text}\n\nPlay at: ${url}`;
+  const inFrame = typeof window !== "undefined" && window.self !== window.top;
+  const canNativeShare = typeof navigator !== "undefined" && navigator.share && !inFrame;
+
+  if (canNativeShare) {
+    navigator.share({ title: "Daily Dilemma", text, url })
+      .then(() => finishResultShare(btn, "Shared!"))
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
+        copyText(payload, btn, () => finishResultShare(btn));
+      });
+    return;
+  }
+
+  copyText(payload, btn, () => finishResultShare(btn));
 }
 
 function render() {
@@ -1585,19 +1637,10 @@ async function init() {
 
   app.root = document.getElementById("app");
   document.body.classList.add("dd-game");
-  const res = await fetch(ddConfig().dilemmasUrl || "dilemmas.json");
+  const res = await fetch("dilemmas.json");
   app.dilemmas = await res.json();
   app.state = loadState();
   app.today = dateKey();
-
-  // Premium is determined by the page, not by storage. Overwrite whatever
-  // was saved so an old/edited local flag can never grant premium.
-  app.state.isPremium = isPremiumPage();
-  if (app.state.isPremium && (app.state.shields == null)) {
-    app.state.shields = PREMIUM_SHIELDS;
-  }
-  saveState(app.state);
-  if (app.state.isPremium) checkAchievements(app.state, app.dilemmas, []);
 
   if (params.has("dev") || isDevHost()) {
     /* dev mode active */
@@ -1616,6 +1659,7 @@ if (typeof module !== "undefined" && module.exports) {
     migrateState, computeStats, computePersonality, getQuickPlayRemaining, dayGap,
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
+    buildResultShareUrl, getShareSiteUrl,
   };
 } else {
   init().catch((e) => {

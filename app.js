@@ -255,6 +255,7 @@ function defaultState() {
     customDilemmas: [],
     achievements: {},
     categoryCompleted: { family: false, adult: false, absurd: false },
+    categoryFreeTrialUsed: false,
     devIdx: null,
   };
 }
@@ -298,8 +299,18 @@ function normalizeState(s) {
   merged.customDilemmas = Array.isArray(s.customDilemmas) ? s.customDilemmas : [];
   merged.achievements = s.achievements || {};
   merged.categoryCompleted = { ...base.categoryCompleted, ...(s.categoryCompleted || {}) };
+  merged.categoryFreeTrialUsed = !!s.categoryFreeTrialUsed;
   merged.quickPlaysToday = s.quickPlaysToday || { date: dateKey(), count: 0 };
-  return merged;
+  return ensureCategoryTrialState(merged);
+}
+
+function ensureCategoryTrialState(state) {
+  if (state.isPremium || state.categoryFreeTrialUsed) return state;
+  const anyCompleted = CATEGORIES.some((c) => state.categoryCompleted?.[c.id]);
+  const anyCategoryPlay = Array.isArray(state.history)
+    && state.history.some((h) => h.mode === "category");
+  if (anyCompleted || anyCategoryPlay) state.categoryFreeTrialUsed = true;
+  return state;
 }
 
 function loadState() {
@@ -518,9 +529,15 @@ function pickCategoryQueue(dilemmas, category, size = CATEGORY_SESSION_SIZE) {
   return shuffled.slice(0, Math.min(size, shuffled.length));
 }
 
-function canStartCategory(state, category) {
+function canStartCategory(state) {
   if (state.isPremium) return true;
-  return !state.categoryCompleted?.[category];
+  return !state.categoryFreeTrialUsed;
+}
+
+function consumeCategoryFreeTrial(state) {
+  if (state.isPremium || state.categoryFreeTrialUsed) return;
+  state.categoryFreeTrialUsed = true;
+  saveState(state);
 }
 
 function dilemmaById(dilemmas, state, id) {
@@ -1525,11 +1542,13 @@ function renderCategories() {
             <div class="cat-body">
               <span class="cat-title">${c.label}</span>
               <span class="cat-blurb">${c.blurb}</span>
-              ${app.state.categoryCompleted[c.id]
-    ? (app.state.isPremium
-      ? '<span class="cat-done">Complete ✓</span>'
-      : `<span class="cat-done cat-premium">${icon("lock", "ico-chip")} Replay — Premium</span>`)
-    : `<span class="cat-meta">${CATEGORY_SESSION_SIZE} dilemmas · ~3 min</span>`}
+              ${!app.state.isPremium && app.state.categoryFreeTrialUsed
+    ? `<span class="cat-done cat-premium">${icon("lock", "ico-chip")} Premium only</span>`
+    : app.state.categoryCompleted[c.id]
+      ? (app.state.isPremium
+        ? '<span class="cat-done">Complete ✓</span>'
+        : `<span class="cat-done cat-premium">${icon("lock", "ico-chip")} Replay — Premium</span>`)
+      : `<span class="cat-meta">${CATEGORY_SESSION_SIZE} dilemmas · ~3 min</span>`}
             </div>
           </button>`).join("")}
       </div>
@@ -1543,10 +1562,11 @@ function renderCategories() {
 }
 
 function startCategory(category) {
-  if (!canStartCategory(app.state, category)) {
+  if (!canStartCategory(app.state)) {
     showUpsellModal();
     return;
   }
+  consumeCategoryFreeTrial(app.state);
   const queue = pickCategoryQueue(app.dilemmas, category);
   app.session = { mode: "category", category, queue, index: 0 };
   renderCategoryStep();
@@ -1591,7 +1611,7 @@ function renderCategoryComplete() {
         <div class="big-emoji">🎉</div>
         <h2 class="celebrate-title">Session complete!</h2>
         <p class="soft">You cleared ${session.queue.length} <strong>${session.category}</strong> dilemmas.</p>
-        ${app.state.isPremium || !CATEGORIES.every((c) => app.state.categoryCompleted[c.id])
+        ${app.state.isPremium || !app.state.categoryFreeTrialUsed
     ? `<button type="button" class="btn primary glow" data-nav="categories">Explore more</button>`
     : `<button type="button" class="btn premium-cta glow" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`}
         <button type="button" class="btn ghost full" data-nav="home">Home</button>
@@ -2018,7 +2038,8 @@ if (typeof module !== "undefined" && module.exports) {
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
     buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
-    getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL, canStartCategory,
+    getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
+    canStartCategory, ensureCategoryTrialState,
   };
 } else {
   init().catch((e) => {

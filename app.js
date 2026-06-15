@@ -644,6 +644,50 @@ function isEmbedded() {
   return typeof window !== "undefined" && window.self !== window.top;
 }
 
+let embedResizeTimer;
+let embedResizeObserver;
+
+function measureEmbedHeight() {
+  const doc = document.documentElement;
+  const body = document.body;
+  const root = app.root;
+  return Math.ceil(Math.max(
+    doc.scrollHeight,
+    doc.offsetHeight,
+    body.scrollHeight,
+    body.offsetHeight,
+    root?.scrollHeight || 0,
+    root?.offsetHeight || 0,
+  )) + 16;
+}
+
+function syncEmbedHeight() {
+  if (!isEmbedded()) return;
+  window.parent.postMessage({ type: "dd-resize", height: measureEmbedHeight() }, "*");
+}
+
+function scheduleEmbedResize() {
+  if (!isEmbedded()) return;
+  clearTimeout(embedResizeTimer);
+  embedResizeTimer = setTimeout(() => {
+    syncEmbedHeight();
+    requestAnimationFrame(syncEmbedHeight);
+  }, 80);
+}
+
+function initEmbedResize() {
+  if (!isEmbedded()) return;
+  document.body.classList.add("dd-embedded");
+  window.addEventListener("resize", scheduleEmbedResize);
+  window.addEventListener("orientationchange", scheduleEmbedResize);
+  if (typeof ResizeObserver !== "undefined") {
+    embedResizeObserver = new ResizeObserver(scheduleEmbedResize);
+    if (app.root) embedResizeObserver.observe(app.root);
+    embedResizeObserver.observe(document.body);
+  }
+  scheduleEmbedResize();
+}
+
 function copyViaExecCommand(text, onSuccess, onFail) {
   const ta = document.createElement("textarea");
   ta.value = text;
@@ -915,9 +959,15 @@ function openModal(title, bodyHtml, actionsHtml = "", opts = {}) {
       </div>
     </div>`);
   document.body.appendChild(backdrop);
-  requestAnimationFrame(() => backdrop.classList.add("open"));
+  requestAnimationFrame(() => {
+    backdrop.classList.add("open");
+    scheduleEmbedResize();
+  });
   backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) backdrop.remove();
+    if (e.target === backdrop) {
+      backdrop.remove();
+      scheduleEmbedResize();
+    }
   });
   return backdrop;
 }
@@ -985,7 +1035,12 @@ const app = {
 function navigate(name, params = {}) {
   app.view = { name, params };
   render();
-  app.root?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  if (isEmbedded()) {
+    window.scrollTo(0, 0);
+    scheduleEmbedResize();
+  } else {
+    app.root?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }
 }
 
 function headerHtml(sub = "") {
@@ -1216,6 +1271,7 @@ function renderVoteScreen(dilemma, meta, onVote) {
     btn.addEventListener("click", () => onVote(btn.dataset.choice));
   });
   bindDevBar();
+  scheduleEmbedResize();
 }
 
 function renderResultsScreen(dilemma, choice, pctA, opts = {}) {
@@ -1270,6 +1326,8 @@ function renderResultsScreen(dilemma, choice, pctA, opts = {}) {
   if (shareBtn) {
     shareBtn.addEventListener("click", () => doShare(shareBtn, dilemma, choice, pctA, opts.mode || "daily"));
   }
+  scheduleEmbedResize();
+  setTimeout(scheduleEmbedResize, 120);
 }
 
 function startDaily() {
@@ -1772,6 +1830,7 @@ function render() {
   else if (v === "settings") renderSettings();
   else if (v === "upsell") showUpsellModal(() => navigate("home"));
   else renderHome();
+  scheduleEmbedResize();
 }
 
 async function init() {
@@ -1803,6 +1862,7 @@ async function init() {
   }
 
   render();
+  initEmbedResize();
 
   if (pendingImport) {
     requestAnimationFrame(() => showImportedShareModal(pendingImport));

@@ -1826,13 +1826,26 @@ body.dd-game.dd-embedded .shell {
   body.dd-embedded .tagline-sub { margin-bottom: 4px; }
 }
 
+body.dd-embedded.dd-modal-open {
+  overflow: hidden !important;
+}
+
 body.dd-embedded .modal-backdrop {
+  position: absolute;
+  inset: 0;
   align-items: center;
   padding: 10px;
 }
 
 body.dd-embedded .modal {
-  max-height: min(92svh, 640px);
+  max-height: none;
+  overflow: visible;
+  transform: none;
+  transition: opacity 0.28s ease;
+}
+
+body.dd-embedded .modal-backdrop.open .modal {
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

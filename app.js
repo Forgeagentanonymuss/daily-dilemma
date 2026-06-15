@@ -647,8 +647,30 @@ function isEmbedded() {
 let embedResizeTimer;
 let embedResizeObserver;
 let lastEmbedHeightSent = 0;
+let embedModalHeight = null;
+
+function measureModalEmbedHeight() {
+  const backdrop = document.querySelector("body > .modal-backdrop");
+  const modal = backdrop?.querySelector(".modal");
+  if (!modal) return null;
+
+  const bodyCs = getComputedStyle(document.body);
+  const padY = (parseFloat(bodyCs.paddingTop) || 0) + (parseFloat(bodyCs.paddingBottom) || 0);
+  const backdropCs = getComputedStyle(backdrop);
+  const backdropPad = (parseFloat(backdropCs.paddingTop) || 0) + (parseFloat(backdropCs.paddingBottom) || 0);
+  const modalH = Math.max(modal.offsetHeight, modal.scrollHeight);
+
+  return Math.ceil(modalH + backdropPad + padY + 16);
+}
 
 function measureEmbedHeight() {
+  if (embedModalHeight != null) return embedModalHeight;
+
+  const modalOnly = isEmbedded() && document.querySelector("body > .modal-backdrop")
+    ? measureModalEmbedHeight()
+    : null;
+  if (modalOnly != null) return modalOnly;
+
   const root = app.root;
   if (!root) return 520;
 
@@ -664,14 +686,51 @@ function measureEmbedHeight() {
   };
 
   trackBottom(root);
-  root.querySelectorAll(".view, .modal-backdrop, .modal").forEach(trackBottom);
-  document.querySelectorAll("body > .modal-backdrop").forEach(trackBottom);
+  root.querySelectorAll(".view").forEach(trackBottom);
 
   if (maxBottom <= 0) {
     maxBottom = root.getBoundingClientRect().bottom;
   }
 
   return Math.ceil(maxBottom + padY + 12);
+}
+
+function releaseEmbedModalLock() {
+  embedModalHeight = null;
+  document.body.classList.remove("dd-modal-open");
+  lastEmbedHeightSent = 0;
+  scheduleEmbedResize();
+}
+
+function beginEmbedModalLock() {
+  if (!isEmbedded()) return;
+  document.body.classList.add("dd-modal-open");
+  if (embedPingTimer) {
+    clearInterval(embedPingTimer);
+    embedPingTimer = null;
+  }
+  clearTimeout(embedResizeTimer);
+}
+
+function hookModalBackdropRemove(backdrop) {
+  if (!backdrop || backdrop.dataset.ddRemoveHook === "1") return;
+  backdrop.dataset.ddRemoveHook = "1";
+  const nativeRemove = backdrop.remove.bind(backdrop);
+  backdrop.remove = function ddModalRemove() {
+    nativeRemove();
+    if (isEmbedded() && !document.querySelector("body > .modal-backdrop")) {
+      releaseEmbedModalLock();
+    }
+  };
+}
+
+function syncEmbedModalHeight() {
+  if (!isEmbedded()) return;
+  const h = measureModalEmbedHeight();
+  if (!h) return;
+  embedModalHeight = h;
+  lastEmbedHeightSent = 0;
+  syncEmbedHeight();
 }
 
 const PARENT_ORIGINS = [
@@ -692,7 +751,7 @@ function syncEmbedHeight() {
 }
 
 function scheduleEmbedResize() {
-  if (!isEmbedded()) return;
+  if (!isEmbedded() || document.querySelector("body > .modal-backdrop")) return;
   clearTimeout(embedResizeTimer);
   embedResizeTimer = setTimeout(() => {
     syncEmbedHeight();
@@ -883,11 +942,14 @@ function showResultShareModal(dilemma, choice, pctA, mode) {
     return { message: shareText(dilemma, choice, pctA, mode), url };
   };
   const selectAll = () => {
-    ta?.focus();
-    ta?.select();
+    if (!ta) return;
+    try { ta.focus({ preventScroll: true }); } catch { ta.focus(); }
+    ta.select();
   };
   ta?.addEventListener("click", selectAll);
-  ta?.addEventListener("focus", selectAll);
+  ta?.addEventListener("focus", (e) => {
+    if (e.isTrusted) selectAll();
+  });
   copyBtn?.addEventListener("click", () => {
     copyText(readPayload(), copyBtn, () => finishResultShare(copyBtn), { silentFail: true });
   });
@@ -1007,15 +1069,19 @@ function openModal(title, bodyHtml, actionsHtml = "", opts = {}) {
       </div>
     </div>`);
   document.body.appendChild(backdrop);
+  hookModalBackdropRemove(backdrop);
+  beginEmbedModalLock();
   requestAnimationFrame(() => {
     backdrop.classList.add("open");
-    scheduleEmbedResize();
-  });
-  backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) {
-      backdrop.remove();
+    if (isEmbedded()) {
+      syncEmbedModalHeight();
+      setTimeout(syncEmbedModalHeight, 380);
+    } else {
       scheduleEmbedResize();
     }
+  });
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) backdrop.remove();
   });
   return backdrop;
 }

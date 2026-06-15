@@ -25,7 +25,7 @@ const QUICK_FREE_LIMIT = 5;
 const FREE_CUSTOM_LIMIT = 2;
 const CATEGORY_SESSION_SIZE = 4;
 const PREMIUM_SHIELDS = 3;
-const SHARE_SITE_URL = "https://www.the-daily-dilemma.com/play";
+const SHARE_SITE_URL = "https://the-daily-dilemma.com";
 
 const CATEGORIES = [
   { id: "family", label: "Family", icon: "cat_family", blurb: "Table-friendly debates" },
@@ -212,9 +212,9 @@ function buildResultShareUrl() {
     const url = new URL(getShareSiteUrl());
     url.searchParams.delete("share");
     url.searchParams.delete("reset");
-    return url.href;
+    return url.href.replace(/\/$/, "");
   } catch {
-    return location.href.split("?")[0];
+    return location.href.split("?")[0].replace(/\/$/, "");
   }
 }
 

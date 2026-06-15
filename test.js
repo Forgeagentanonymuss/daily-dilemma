@@ -7,7 +7,8 @@ const {
   migrateState, computeStats, computePersonality, getQuickPlayRemaining,
   dayGap, defaultState, QUICK_FREE_LIMIT,
   encodeSharePayload, decodeSharePayload, customShareMessage,
-  buildResultShareUrl, getShareSiteUrl,
+  buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
+  getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
 } = require("./app.js");
 
 const dilemmas = JSON.parse(
@@ -97,7 +98,19 @@ assert.equal(decodeSharePayload(encodeSharePayload({ category: "nope", a: "x", b
 const msg = customShareMessage(sample);
 assert.ok(msg.includes("Duck-sized horse"), "share message mentions dilemma");
 
-assert.equal(getShareSiteUrl(), "https://the-daily-dilemma.com/play", "default share site");
-assert.equal(buildResultShareUrl(), "https://the-daily-dilemma.com/play", "result share url is canonical play page");
+assert.equal(getShareSiteUrl(), "https://the-daily-dilemma.com", "default share site");
+assert.equal(buildResultShareUrl(), "https://the-daily-dilemma.com", "result share url is site home");
+assert.equal(normalizeShareSiteUrl("https://the-daily-dilemma.com/play"), "https://the-daily-dilemma.com", "strips /play path");
+assert.equal(normalizeShareSiteUrl("https://www.the-daily-dilemma.com/play/"), "https://www.the-daily-dilemma.com", "strips trailing /play/");
+
+const social = buildSocialShareUrls("Daily Dilemma · I picked Pizza", "https://the-daily-dilemma.com");
+assert.ok(social.facebook.includes("facebook.com/sharer"), "facebook share url");
+assert.ok(social.whatsapp.includes("wa.me"), "whatsapp share url");
+assert.ok(social.x.includes("twitter.com/intent/tweet"), "x share url");
+assert.ok(social.linkedin.includes("linkedin.com/sharing"), "linkedin share url");
+
+assert.equal(getPremiumPaywallUrl(), PREMIUM_PAYWALL_URL, "default paywall url");
+assert.ok(PREMIUM_PRICE_LABEL.includes("£"), "premium price uses GBP");
+assert.ok(!PREMIUM_PRICE_LABEL.includes("$"), "premium price not USD");
 
 console.log(`OK — ${dilemmas.length} dilemmas, index today=${i1} id=${dilemmas[i1].id}`);

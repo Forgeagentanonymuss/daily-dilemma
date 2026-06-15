@@ -22,9 +22,10 @@ const STORAGE_KEY_LEGACY = "dailyDilemma_v1";
 const TAGLINE = "Pick a side. Argue about it later.";
 const TAGLINE_SUB = "One impossible choice. Every day.";
 const QUICK_FREE_LIMIT = 5;
-const FREE_CUSTOM_LIMIT = 2;
 const CATEGORY_SESSION_SIZE = 4;
 const PREMIUM_SHIELDS = 3;
+const PREMIUM_PRICE_LABEL = "£2.99/mo";
+const PREMIUM_PAYWALL_URL = "https://www.the-daily-dilemma.com/go-premium";
 const SHARE_SITE_URL = "https://the-daily-dilemma.com";
 
 const CATEGORIES = [
@@ -569,14 +570,31 @@ function ephemeralSharedDilemma(imported) {
   };
 }
 
+function getPremiumPaywallUrl() {
+  if (typeof window !== "undefined" && window.DD_PREMIUM_URL) {
+    return String(window.DD_PREMIUM_URL).trim();
+  }
+  try {
+    const join = new URLSearchParams(location.search).get("join");
+    if (join) return join;
+  } catch { /* ignore */ }
+  return PREMIUM_PAYWALL_URL;
+}
+
+function goToPremiumPaywall() {
+  const url = getPremiumPaywallUrl();
+  try {
+    if (isEmbedded()) window.top.location.href = url;
+    else window.location.href = url;
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 function saveImportedDilemma(imported) {
   const { state } = app;
-  if (!state.isPremium && state.customDilemmas.length >= FREE_CUSTOM_LIMIT) {
-    showUpsellModal(() => {
-      if (app.state.isPremium || app.state.customDilemmas.length < FREE_CUSTOM_LIMIT) {
-        saveImportedDilemma(imported);
-      }
-    });
+  if (!state.isPremium) {
+    showUpsellModal();
     return null;
   }
   const id = `c${Date.now()}`;
@@ -649,27 +667,8 @@ let embedResizeObserver;
 let lastEmbedHeightSent = 0;
 let embedModalHeight = null;
 
-function measureModalEmbedHeight() {
-  const backdrop = document.querySelector("body > .modal-backdrop");
-  const modal = backdrop?.querySelector(".modal");
-  if (!modal) return null;
-
-  const bodyCs = getComputedStyle(document.body);
-  const padY = (parseFloat(bodyCs.paddingTop) || 0) + (parseFloat(bodyCs.paddingBottom) || 0);
-  const backdropCs = getComputedStyle(backdrop);
-  const backdropPad = (parseFloat(backdropCs.paddingTop) || 0) + (parseFloat(backdropCs.paddingBottom) || 0);
-  const modalH = Math.max(modal.offsetHeight, modal.scrollHeight);
-
-  return Math.ceil(modalH + backdropPad + padY + 16);
-}
-
 function measureEmbedHeight() {
   if (embedModalHeight != null) return embedModalHeight;
-
-  const modalOnly = isEmbedded() && document.querySelector("body > .modal-backdrop")
-    ? measureModalEmbedHeight()
-    : null;
-  if (modalOnly != null) return modalOnly;
 
   const root = app.root;
   if (!root) return 520;
@@ -698,18 +697,23 @@ function measureEmbedHeight() {
 function releaseEmbedModalLock() {
   embedModalHeight = null;
   document.body.classList.remove("dd-modal-open");
+  setParentModalLock(false);
   lastEmbedHeightSent = 0;
   scheduleEmbedResize();
 }
 
-function beginEmbedModalLock() {
+function freezeEmbedHeightForModal() {
   if (!isEmbedded()) return;
   document.body.classList.add("dd-modal-open");
+  embedModalHeight = lastEmbedHeightSent > 0 ? lastEmbedHeightSent : measureEmbedHeight();
   if (embedPingTimer) {
     clearInterval(embedPingTimer);
     embedPingTimer = null;
   }
   clearTimeout(embedResizeTimer);
+  setParentModalLock(true);
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
 }
 
 function hookModalBackdropRemove(backdrop) {
@@ -724,22 +728,23 @@ function hookModalBackdropRemove(backdrop) {
   };
 }
 
-function syncEmbedModalHeight() {
-  if (!isEmbedded()) return;
-  const h = measureModalEmbedHeight();
-  if (!h) return;
-  embedModalHeight = h;
-  lastEmbedHeightSent = 0;
-  syncEmbedHeight();
-}
-
 const PARENT_ORIGINS = [
   "https://the-daily-dilemma.com",
   "https://www.the-daily-dilemma.com",
 ];
 
+function setParentModalLock(open) {
+  if (!isEmbedded()) return;
+  const payload = { type: "dd-modal", open: !!open };
+  PARENT_ORIGINS.forEach((origin) => {
+    try { window.parent.postMessage(payload, origin); } catch { /* ignore */ }
+  });
+  try { window.parent.postMessage(payload, "*"); } catch { /* ignore */ }
+}
+
 function syncEmbedHeight() {
   if (!isEmbedded()) return;
+  if (document.querySelector("body > .modal-backdrop")) return;
   const height = measureEmbedHeight();
   if (height === lastEmbedHeightSent) return;
   lastEmbedHeightSent = height;
@@ -954,7 +959,7 @@ function showResultShareModal(dilemma, choice, pctA, mode) {
     copyText(readPayload(), copyBtn, () => finishResultShare(copyBtn), { silentFail: true });
   });
   bindSocialShareButtons(backdrop, readPayload, getShareParts);
-  requestAnimationFrame(selectAll);
+  if (!isEmbedded()) requestAnimationFrame(selectAll);
 }
 
 function showShareFallbackModal(text) {
@@ -1068,18 +1073,17 @@ function openModal(title, bodyHtml, actionsHtml = "", opts = {}) {
         <div class="modal-actions">${actionsHtml}</div>
       </div>
     </div>`);
+  if (isEmbedded()) freezeEmbedHeightForModal();
   document.body.appendChild(backdrop);
   hookModalBackdropRemove(backdrop);
-  beginEmbedModalLock();
-  requestAnimationFrame(() => {
+  if (isEmbedded()) {
     backdrop.classList.add("open");
-    if (isEmbedded()) {
-      syncEmbedModalHeight();
-      setTimeout(syncEmbedModalHeight, 380);
-    } else {
+  } else {
+    requestAnimationFrame(() => {
+      backdrop.classList.add("open");
       scheduleEmbedResize();
-    }
-  });
+    });
+  }
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) backdrop.remove();
   });
@@ -1089,14 +1093,14 @@ function openModal(title, bodyHtml, actionsHtml = "", opts = {}) {
 function premiumBenefitsHtml() {
   const items = [
     "Unlimited Quick Play",
-    "Custom dilemmas in random pool",
+    "Create & share custom dilemmas",
     `${PREMIUM_SHIELDS} streak shields`,
-    "Support new packs & features",
+    "Creator achievements",
   ];
   return `<ul class="benefits">
     ${items.map((t) => `<li>${icon("check", "ico-check")}<span>${t}</span></li>`).join("")}
   </ul>
-  <p class="price-hint"><strong>$2.99/mo</strong> · $19.99/yr · $39.99 lifetime</p>`;
+  <p class="price-hint"><strong>${PREMIUM_PRICE_LABEL}</strong> · Cancel anytime</p>`;
 }
 
 function bindChoicePress(root) {
@@ -1108,30 +1112,16 @@ function bindChoicePress(root) {
   });
 }
 
-function unlockPremiumDemo(state, onDone) {
-  state.isPremium = true;
-  state.shields = PREMIUM_SHIELDS;
-  saveState(state);
-  checkAchievements(state, app.dilemmas, []);
-  openModal("You're Premium! 🎉", `<p class="modal-lead">Demo unlock active. Enjoy unlimited Quick Play, custom dilemmas in the pool, and streak shields.</p>`, `
-    <button class="btn premium-cta full" data-close>${icon("spark", "ico-btn")} Let's go</button>`, { premium: true });
-  launchConfetti();
-  document.querySelector("[data-close]")?.addEventListener("click", () => {
-    document.querySelector(".modal-backdrop")?.remove();
-    onDone?.();
-  });
-}
-
-function showUpsellModal(onUnlock) {
-  const backdrop = openModal("Unlock the full experience", `
+function showUpsellModal() {
+  const backdrop = openModal("Unlock Premium", `
     <p class="modal-lead">Play without limits. Create dilemmas. Protect your streak.</p>
     ${premiumBenefitsHtml()}`, `
     <button class="btn ghost" data-close>Maybe later</button>
-    <button class="btn premium-cta" data-unlock>${icon("spark", "ico-btn")} Unlock Premium (Demo)</button>`, { premium: true });
+    <button class="btn premium-cta" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`, { premium: true });
   backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
-  backdrop.querySelector("[data-unlock]")?.addEventListener("click", () => {
+  backdrop.querySelector("[data-subscribe]")?.addEventListener("click", () => {
     backdrop.remove();
-    unlockPremiumDemo(app.state, onUnlock);
+    goToPremiumPaywall();
   });
 }
 
@@ -1185,7 +1175,7 @@ function bindCommon() {
   app.root.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const dest = btn.dataset.nav;
-      if (dest === "upsell") showUpsellModal(() => render());
+      if (dest === "upsell") showUpsellModal();
       else navigate(dest);
     });
   });
@@ -1223,6 +1213,11 @@ function bindDevBar() {
 }
 
 function handleAction(action, btn) {
+  const card = ACTION_CARDS.find((c) => c.action === action);
+  if (card?.locked && !app.state.isPremium) {
+    showUpsellModal();
+    return;
+  }
   const map = {
     "daily-play": () => startDaily(),
     "quick-play": () => startQuick(),
@@ -1482,7 +1477,7 @@ function startDaily() {
 function startQuick(fromResults = false) {
   const remaining = getQuickPlayRemaining(app.state, app.today);
   if (!app.state.isPremium && remaining <= 0) {
-    showUpsellModal(() => startQuick(fromResults));
+    showUpsellModal();
     return;
   }
   const pool = playablePool(app.dilemmas, app.state);
@@ -1706,25 +1701,19 @@ function renderSettings() {
       ${headerHtml("Settings")}
       ${backRow("Home")}
       <div class="card-panel settings section-card">
-        <div class="settings-row"><span>Premium</span><strong>${state.isPremium ? "Active (demo)" : "Free tier"}</strong></div>
+        <div class="settings-row"><span>Premium</span><strong>${state.isPremium ? "Active" : "Free tier"}</strong></div>
         <div class="settings-row"><span>Streak shields</span><strong>${state.shields}</strong></div>
         <div class="settings-row"><span>Custom dilemmas</span><strong>${state.customDilemmas.length}</strong></div>
-        <button type="button" class="btn ${state.isPremium ? "ghost" : "premium-cta"} full" data-nav="upsell">
-          ${state.isPremium ? "Premium active" : `${icon("spark", "ico-btn")} Unlock Premium (Demo)`}
-        </button>
-        ${state.isPremium ? `<button type="button" class="btn ghost full" id="revokePremium">Turn off demo premium</button>` : ""}
+        ${state.isPremium
+    ? `<button type="button" class="btn ghost full" disabled>Premium active</button>`
+    : `<button type="button" class="btn premium-cta full" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`}
         <button type="button" class="btn ghost full" id="clearData">Clear all local data</button>
       </div>
       ${devBarHtml()}
     </div>`;
   bindCommon();
   bindDevBar();
-  document.getElementById("revokePremium")?.addEventListener("click", () => {
-    state.isPremium = false;
-    saveState(state);
-    showToast("Demo premium off");
-    render();
-  });
+  app.root.querySelector("[data-subscribe]")?.addEventListener("click", () => goToPremiumPaywall());
   document.getElementById("clearData")?.addEventListener("click", () => {
     if (confirm("Clear all progress?")) {
       resetState("all");
@@ -1767,13 +1756,13 @@ function bindCreationsList(backdrop, state) {
     });
   });
   backdrop.querySelectorAll("[data-share-upsell]").forEach((btn) => {
-    btn.addEventListener("click", () => showUpsellModal(() => showCreateModal()));
+    btn.addEventListener("click", () => showUpsellModal());
   });
 }
 
 function showShareDilemmaModal(custom) {
   if (!app.state.isPremium) {
-    showUpsellModal(() => showShareDilemmaModal(custom));
+    showUpsellModal();
     return;
   }
   const link = buildCustomShareUrl(custom);
@@ -1825,7 +1814,9 @@ function showImportedShareModal(imported) {
     </div>
     <p class="share-trust-note soft">It won't be saved unless you choose to. No public feed — just a link between friends.</p>`,
   `<button class="btn ghost" data-close>Not now</button>
-   <button class="btn sage-ghost" id="saveImport">${icon("pencil", "ico-btn")} Save to My Creations</button>
+   ${app.state.isPremium
+    ? `<button class="btn sage-ghost" id="saveImport">${icon("pencil", "ico-btn")} Save to My Creations</button>`
+    : `<button class="btn sage-ghost" id="saveImportUpsell">${icon("lock", "ico-btn")} Save (Premium)</button>`}
    <button class="btn primary glow" id="playImport">${icon("bolt", "ico-btn")} Play once</button>`);
   backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#playImport")?.addEventListener("click", () => {
@@ -1836,16 +1827,19 @@ function showImportedShareModal(imported) {
     const id = saveImportedDilemma(imported);
     if (!id) return;
     backdrop.remove();
-    showToast(app.state.isPremium ? "Saved to My Creations!" : "Saved as a private draft");
+    showToast("Saved to My Creations!");
     showCreateModal();
+  });
+  backdrop.querySelector("#saveImportUpsell")?.addEventListener("click", () => {
+    backdrop.remove();
+    showUpsellModal();
   });
 }
 
 function showCreateModal() {
   const { state } = app;
-  const atLimit = !state.isPremium && state.customDilemmas.length >= FREE_CUSTOM_LIMIT;
-  if (atLimit) {
-    showUpsellModal(() => showCreateModal());
+  if (!state.isPremium) {
+    showUpsellModal();
     return;
   }
   const backdrop = openModal("Create a dilemma", `
@@ -1864,7 +1858,6 @@ function showCreateModal() {
     <label class="field">Option B
       <input id="cB" class="input" maxlength="120" placeholder="Second choice">
     </label>
-    ${!state.isPremium ? `<p class="soft note-box">Free: up to ${FREE_CUSTOM_LIMIT} private drafts. Premium adds them to Quick Play.</p>` : ""}
     <section class="creations-section">
       <h3 class="creations-title">My Creations</h3>
       <div id="creationsList">${renderCreationsListHtml(state)}</div>
@@ -1942,7 +1935,7 @@ function render() {
   else if (v === "stats") renderStats();
   else if (v === "achievements") renderAchievements();
   else if (v === "settings") renderSettings();
-  else if (v === "upsell") showUpsellModal(() => navigate("home"));
+  else if (v === "upsell") showUpsellModal();
   else renderHome();
   scheduleEmbedResize();
 }
@@ -1994,6 +1987,7 @@ if (typeof module !== "undefined" && module.exports) {
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
     buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
+    getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
   };
 } else {
   init().catch((e) => {

@@ -200,22 +200,30 @@ function shareText(dilemma, choice, pctA, mode = "daily") {
   return `${prefix} · I picked: "${picked}" (${pctA}% chose A)`;
 }
 
+function normalizeShareSiteUrl(raw) {
+  try {
+    const url = new URL(raw);
+    if (url.pathname === "/play" || url.pathname.startsWith("/play/")) {
+      url.pathname = "/";
+    }
+    url.search = "";
+    url.hash = "";
+    const href = url.href.replace(/\/$/, "");
+    return href || SHARE_SITE_URL;
+  } catch {
+    return SHARE_SITE_URL;
+  }
+}
+
 function getShareSiteUrl() {
   if (typeof window !== "undefined" && window.DD_SHARE_URL) {
-    return String(window.DD_SHARE_URL);
+    return normalizeShareSiteUrl(String(window.DD_SHARE_URL));
   }
   return SHARE_SITE_URL;
 }
 
 function buildResultShareUrl() {
-  try {
-    const url = new URL(getShareSiteUrl());
-    url.searchParams.delete("share");
-    url.searchParams.delete("reset");
-    return url.href.replace(/\/$/, "");
-  } catch {
-    return location.href.split("?")[0].replace(/\/$/, "");
-  }
+  return normalizeShareSiteUrl(getShareSiteUrl());
 }
 
 function buildSocialShareUrls(message, url) {
@@ -541,11 +549,11 @@ function decodeSharePayload(token) {
 }
 
 function buildCustomShareUrl(dilemma) {
-  const url = new URL(location.href);
+  const url = new URL(getShareSiteUrl());
   url.searchParams.delete("share");
   url.searchParams.delete("reset");
   url.searchParams.set("share", encodeSharePayload(dilemma));
-  return url.toString();
+  return url.href;
 }
 
 function customShareMessage(dilemma) {
@@ -1807,7 +1815,7 @@ if (typeof module !== "undefined" && module.exports) {
     migrateState, computeStats, computePersonality, getQuickPlayRemaining, dayGap,
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
-    buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls,
+    buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
   };
 } else {
   init().catch((e) => {

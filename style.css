@@ -47,11 +47,21 @@ body.dd-game {
   background: transparent;
 }
 
+html.dd-embedded,
 body.dd-game.dd-embedded {
-  min-height: 0;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+body.dd-game:not(.dd-embedded) {
+  min-height: 100svh;
+}
+
+body.dd-game.dd-embedded {
   padding: 6px 8px 10px;
   display: block;
   overflow-x: hidden;
+  overflow-y: visible;
 }
 
 body.dd-game.dd-embedded .shell {

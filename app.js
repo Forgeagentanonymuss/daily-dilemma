@@ -646,44 +646,49 @@ function isEmbedded() {
 
 let embedResizeTimer;
 let embedResizeObserver;
+let lastEmbedHeightSent = 0;
 
 function measureEmbedHeight() {
   const root = app.root;
-  const doc = document.documentElement;
-  const body = document.body;
-  let height = 0;
+  if (!root) return 520;
 
-  if (root) {
-    const bodyCs = getComputedStyle(body);
-    const padY = (parseFloat(bodyCs.paddingTop) || 0) + (parseFloat(bodyCs.paddingBottom) || 0);
-    height = Math.max(
-      height,
-      root.offsetTop + root.offsetHeight + padY,
-      root.getBoundingClientRect().height + padY,
-      root.scrollHeight + padY,
-    );
+  const bodyCs = getComputedStyle(document.body);
+  const padY = (parseFloat(bodyCs.paddingTop) || 0) + (parseFloat(bodyCs.paddingBottom) || 0);
+  let maxBottom = 0;
+
+  const trackBottom = (node) => {
+    if (!node || typeof node.getBoundingClientRect !== "function") return;
+    const rect = node.getBoundingClientRect();
+    if (rect.height <= 0 && rect.width <= 0) return;
+    maxBottom = Math.max(maxBottom, rect.bottom);
+  };
+
+  trackBottom(root);
+  root.querySelectorAll(".view, .modal-backdrop, .modal").forEach(trackBottom);
+  document.querySelectorAll("body > .modal-backdrop").forEach(trackBottom);
+
+  if (maxBottom <= 0) {
+    maxBottom = root.getBoundingClientRect().bottom;
   }
 
-  height = Math.max(
-    height,
-    doc.scrollHeight,
-    doc.offsetHeight,
-    body.scrollHeight,
-    body.offsetHeight,
-  );
-
-  return Math.ceil(height + 20);
+  return Math.ceil(maxBottom + padY + 12);
 }
+
+const PARENT_ORIGINS = [
+  "https://the-daily-dilemma.com",
+  "https://www.the-daily-dilemma.com",
+];
 
 function syncEmbedHeight() {
   if (!isEmbedded()) return;
   const height = measureEmbedHeight();
+  if (height === lastEmbedHeightSent) return;
+  lastEmbedHeightSent = height;
   const payload = { type: "dd-resize", height };
-  try {
-    window.parent.postMessage(payload, "*");
-  } catch {
-    /* ignore */
-  }
+  PARENT_ORIGINS.forEach((origin) => {
+    try { window.parent.postMessage(payload, origin); } catch { /* ignore */ }
+  });
+  try { window.parent.postMessage(payload, "*"); } catch { /* ignore */ }
 }
 
 function scheduleEmbedResize() {
@@ -695,24 +700,40 @@ function scheduleEmbedResize() {
   }, 50);
 }
 
+let embedPingTimer;
+
 function burstEmbedResize() {
   if (!isEmbedded()) return;
   scheduleEmbedResize();
-  [200, 500, 1000, 1800].forEach((ms) => setTimeout(scheduleEmbedResize, ms));
+  [100, 300, 600, 1200, 2400, 4000].forEach((ms) => setTimeout(scheduleEmbedResize, ms));
+}
+
+function startEmbedPing() {
+  if (!isEmbedded() || embedPingTimer) return;
+  let n = 0;
+  embedPingTimer = setInterval(() => {
+    syncEmbedHeight();
+    n += 1;
+    if (n >= 8) clearInterval(embedPingTimer);
+  }, 400);
 }
 
 function initEmbedResize() {
   if (!isEmbedded()) return;
   document.body.classList.add("dd-embedded");
+  document.documentElement.classList.add("dd-embedded");
   window.addEventListener("resize", scheduleEmbedResize);
   window.addEventListener("orientationchange", scheduleEmbedResize);
   window.addEventListener("load", burstEmbedResize);
-  if (typeof ResizeObserver !== "undefined") {
+  window.addEventListener("message", (e) => {
+    if (e.data?.type === "dd-request-resize") scheduleEmbedResize();
+  });
+  if (typeof ResizeObserver !== "undefined" && app.root) {
     embedResizeObserver = new ResizeObserver(scheduleEmbedResize);
-    if (app.root) embedResizeObserver.observe(app.root);
-    embedResizeObserver.observe(document.body);
+    embedResizeObserver.observe(app.root);
   }
   burstEmbedResize();
+  startEmbedPing();
 }
 
 function copyViaExecCommand(text, onSuccess, onFail) {
@@ -1879,6 +1900,10 @@ async function init() {
 
   app.root = document.getElementById("app");
   document.body.classList.add("dd-game");
+  if (isEmbedded()) {
+    document.body.classList.add("dd-embedded");
+    document.documentElement.classList.add("dd-embedded");
+  }
   const res = await fetch("dilemmas.json");
   app.dilemmas = await res.json();
   app.state = loadState();

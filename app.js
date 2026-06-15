@@ -518,6 +518,11 @@ function pickCategoryQueue(dilemmas, category, size = CATEGORY_SESSION_SIZE) {
   return shuffled.slice(0, Math.min(size, shuffled.length));
 }
 
+function canStartCategory(state, category) {
+  if (state.isPremium) return true;
+  return !state.categoryCompleted?.[category];
+}
+
 function dilemmaById(dilemmas, state, id) {
   return dilemmas.find((d) => d.id === id) ||
     state.customDilemmas.find((d) => d.id === id) || null;
@@ -1521,7 +1526,9 @@ function renderCategories() {
               <span class="cat-title">${c.label}</span>
               <span class="cat-blurb">${c.blurb}</span>
               ${app.state.categoryCompleted[c.id]
-    ? '<span class="cat-done">Complete ✓</span>'
+    ? (app.state.isPremium
+      ? '<span class="cat-done">Complete ✓</span>'
+      : `<span class="cat-done cat-premium">${icon("lock", "ico-chip")} Replay — Premium</span>`)
     : `<span class="cat-meta">${CATEGORY_SESSION_SIZE} dilemmas · ~3 min</span>`}
             </div>
           </button>`).join("")}
@@ -1536,6 +1543,10 @@ function renderCategories() {
 }
 
 function startCategory(category) {
+  if (!canStartCategory(app.state, category)) {
+    showUpsellModal();
+    return;
+  }
   const queue = pickCategoryQueue(app.dilemmas, category);
   app.session = { mode: "category", category, queue, index: 0 };
   renderCategoryStep();
@@ -1580,13 +1591,16 @@ function renderCategoryComplete() {
         <div class="big-emoji">🎉</div>
         <h2 class="celebrate-title">Session complete!</h2>
         <p class="soft">You cleared ${session.queue.length} <strong>${session.category}</strong> dilemmas.</p>
-        <button type="button" class="btn primary glow" data-nav="categories">Explore more</button>
+        ${app.state.isPremium || !CATEGORIES.every((c) => app.state.categoryCompleted[c.id])
+    ? `<button type="button" class="btn primary glow" data-nav="categories">Explore more</button>`
+    : `<button type="button" class="btn premium-cta glow" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`}
         <button type="button" class="btn ghost full" data-nav="home">Home</button>
       </div>
       ${devBarHtml()}
     </div>`;
   bindCommon();
   bindDevBar();
+  app.root.querySelector("[data-subscribe]")?.addEventListener("click", () => goToPremiumPaywall());
   launchConfetti();
 }
 
@@ -1679,7 +1693,7 @@ function renderAchievements() {
         ${ACHIEVEMENTS.map((a) => {
     const date = unlocked[a.id];
     return `
-            <div class="ach-card ${date ? "unlocked" : "locked"}" tabindex="0">
+            <div class="ach-card ${date ? "unlocked" : "locked"}" tabindex="0" data-ach-id="${a.id}">
               <div class="ach-glow"></div>
               ${achIconHtml(a.icon, !!date)}
               <div class="ach-title">${a.title}</div>
@@ -1692,6 +1706,23 @@ function renderAchievements() {
     </div>`;
   bindCommon();
   bindDevBar();
+  app.root.querySelectorAll(".ach-card.locked").forEach((card) => {
+    const onLockedAch = () => {
+      if (!app.state.isPremium) {
+        showUpsellModal();
+        return;
+      }
+      const ach = ACHIEVEMENTS.find((a) => a.id === card.dataset.achId);
+      showToast(ach ? `${ach.title} — ${ach.desc}` : "Keep playing to unlock");
+    };
+    card.addEventListener("click", onLockedAch);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onLockedAch();
+      }
+    });
+  });
 }
 
 function renderSettings() {
@@ -1987,7 +2018,7 @@ if (typeof module !== "undefined" && module.exports) {
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
     encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
     buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
-    getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
+    getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL, canStartCategory,
   };
 } else {
   init().catch((e) => {

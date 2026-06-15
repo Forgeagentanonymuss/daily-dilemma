@@ -1077,6 +1077,13 @@ body.dd-game.dd-embedded .shell {
 .cat-blurb, .cat-meta { font-size: 0.84rem; color: var(--soft); }
 .cat-done { font-size: 0.8rem; color: var(--sage-deep); font-weight: 700; }
 
+.cat-done.cat-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gold-deep, #9a7b2f);
+}
+
 .celebrate-card { padding: 30px 22px; background: linear-gradient(165deg, var(--card), var(--gold-soft)); }
 .celebrate-title { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 8px; }
 .big-emoji { font-size: 2.8rem; margin-bottom: 10px; }
@@ -1232,6 +1239,7 @@ body.dd-game.dd-embedded .shell {
 }
 
 .ach-card.locked {
+  cursor: pointer;
   background: linear-gradient(165deg, var(--card), var(--sage-soft));
   border-color: rgba(77, 125, 110, 0.18);
 }
@@ -1831,17 +1839,23 @@ body.dd-embedded.dd-modal-open {
 }
 
 body.dd-embedded .modal-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   align-items: center;
   padding: 10px;
+  opacity: 1;
+  transition: none;
 }
 
-body.dd-embedded .modal {
-  max-height: none;
-  overflow: visible;
+body.dd-embedded.dd-modal-open .modal {
+  width: min(400px, 100%);
+  max-height: calc(100% - 20px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   transform: none;
-  transition: opacity 0.28s ease;
+  transition: none;
 }
 
 body.dd-embedded .modal-backdrop.open .modal {

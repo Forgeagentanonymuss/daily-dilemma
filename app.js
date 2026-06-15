@@ -25,7 +25,7 @@ const QUICK_FREE_LIMIT = 5;
 const FREE_CUSTOM_LIMIT = 2;
 const CATEGORY_SESSION_SIZE = 4;
 const PREMIUM_SHIELDS = 3;
-const SHARE_SITE_URL = "https://the-daily-dilemma.com/play";
+const SHARE_SITE_URL = "https://www.the-daily-dilemma.com/play";
 
 const CATEGORIES = [
   { id: "family", label: "Family", icon: "cat_family", blurb: "Table-friendly debates" },
@@ -609,14 +609,29 @@ function markCopyButtonCopied(btn, doneLabel = "Copied!") {
   }, 2200);
 }
 
+function isEmbedded() {
+  return typeof window !== "undefined" && window.self !== window.top;
+}
+
 function copyViaExecCommand(text, onSuccess, onFail) {
   const ta = document.createElement("textarea");
   ta.value = text;
   ta.setAttribute("readonly", "");
-  ta.style.position = "fixed";
-  ta.style.left = "-9999px";
+  Object.assign(ta.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "1px",
+    height: "1px",
+    opacity: "0",
+    padding: "0",
+    border: "none",
+    outline: "none",
+  });
   document.body.appendChild(ta);
+  ta.focus();
   ta.select();
+  ta.setSelectionRange(0, text.length);
   let ok = false;
   try {
     ok = document.execCommand("copy");
@@ -628,15 +643,19 @@ function copyViaExecCommand(text, onSuccess, onFail) {
   else onFail?.();
 }
 
-function copyText(text, btn, onDone) {
+function copyText(text, btn, onDone, opts = {}) {
   const done = () => { onDone?.(btn); };
+  const fail = () => {
+    if (opts.silentFail) showToast("Select the text above, then copy manually");
+    else showShareFallbackModal(text);
+  };
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(text)
       .then(done)
-      .catch(() => copyViaExecCommand(text, done, () => showShareFallbackModal(text)));
+      .catch(() => copyViaExecCommand(text, done, fail));
     return;
   }
-  copyViaExecCommand(text, done, () => showShareFallbackModal(text));
+  copyViaExecCommand(text, done, fail);
 }
 
 function finishResultShare(btn, label = "Copied!") {
@@ -649,10 +668,44 @@ function finishResultShare(btn, label = "Copied!") {
   if (unlocked.length) launchConfetti();
 }
 
+function buildResultSharePayload(dilemma, choice, pctA, mode) {
+  const text = shareText(dilemma, choice, pctA, mode);
+  const url = buildResultShareUrl();
+  return `${text}\n\nPlay at: ${url}`;
+}
+
+function showResultShareModal(dilemma, choice, pctA, mode) {
+  const payload = buildResultSharePayload(dilemma, choice, pctA, mode);
+  const backdrop = openModal("Share your pick", `
+    <p class="modal-lead">Copy your result and send it to friends — they'll land on <strong>the-daily-dilemma.com</strong>.</p>
+    <label class="field share-message-field">
+      <span class="field-label">Your share message</span>
+      <textarea class="input share-message-input share-message-editable" id="resultShareText" rows="5">${escapeHtml(payload)}</textarea>
+    </label>
+    <button type="button" class="btn primary glow copy-link-btn full" id="resultShareCopy">${icon("share", "ico-btn")} Copy to clipboard</button>
+    <p class="share-trust-note soft">${icon("share", "ico-chip")} Paste in a text, DM, or post. On mobile, you can also long-press the text above and tap Copy.</p>`,
+  `<button class="btn ghost" data-close>Done</button>`,
+  { premium: true });
+  backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
+  const ta = backdrop.querySelector("#resultShareText");
+  const copyBtn = backdrop.querySelector("#resultShareCopy");
+  const readPayload = () => ta?.value || payload;
+  const selectAll = () => {
+    ta?.focus();
+    ta?.select();
+  };
+  ta?.addEventListener("click", selectAll);
+  ta?.addEventListener("focus", selectAll);
+  copyBtn?.addEventListener("click", () => {
+    copyText(readPayload(), copyBtn, () => finishResultShare(copyBtn), { silentFail: true });
+  });
+  requestAnimationFrame(selectAll);
+}
+
 function showShareFallbackModal(text) {
   const backdrop = openModal("Copy your pick", `
     <p class="modal-lead">Your browser blocked automatic copy. Select the text below and copy it manually.</p>
-    <textarea class="input share-message-input" id="shareFallbackText" rows="4">${escapeHtml(text)}</textarea>
+    <textarea class="input share-message-input share-message-editable" id="shareFallbackText" rows="4">${escapeHtml(text)}</textarea>
     <p class="soft">Paste it in a message, post, or group chat to invite friends.</p>`,
   `<button class="btn ghost" data-close>Close</button>
    <button class="btn primary glow" id="shareFallbackRetry">Try copy again</button>`);
@@ -660,10 +713,10 @@ function showShareFallbackModal(text) {
   const ta = backdrop.querySelector("#shareFallbackText");
   ta?.addEventListener("focus", () => ta.select());
   backdrop.querySelector("#shareFallbackRetry")?.addEventListener("click", () => {
-    copyText(text, null, () => {
+    copyText(ta?.value || text, backdrop.querySelector("#shareFallbackRetry"), () => {
       backdrop.remove();
       finishResultShare(null);
-    });
+    }, { silentFail: true });
   });
   requestAnimationFrame(() => ta?.select());
 }
@@ -1587,23 +1640,25 @@ function doShare(btn, dilemma, choice, pctA, mode) {
     showToast("Nothing to share yet");
     return;
   }
+
+  if (isEmbedded()) {
+    showResultShareModal(d, c, p, mode);
+    return;
+  }
+
   const text = shareText(d, c, p, mode);
   const url = buildResultShareUrl();
-  const payload = `${text}\n\nPlay at: ${url}`;
-  const inFrame = typeof window !== "undefined" && window.self !== window.top;
-  const canNativeShare = typeof navigator !== "undefined" && navigator.share && !inFrame;
-
-  if (canNativeShare) {
+  if (typeof navigator !== "undefined" && navigator.share) {
     navigator.share({ title: "Daily Dilemma", text, url })
       .then(() => finishResultShare(btn, "Shared!"))
       .catch((err) => {
         if (err?.name === "AbortError") return;
-        copyText(payload, btn, () => finishResultShare(btn));
+        showResultShareModal(d, c, p, mode);
       });
     return;
   }
 
-  copyText(payload, btn, () => finishResultShare(btn));
+  showResultShareModal(d, c, p, mode);
 }
 
 function render() {

@@ -648,22 +648,42 @@ let embedResizeTimer;
 let embedResizeObserver;
 
 function measureEmbedHeight() {
+  const root = app.root;
   const doc = document.documentElement;
   const body = document.body;
-  const root = app.root;
-  return Math.ceil(Math.max(
+  let height = 0;
+
+  if (root) {
+    const bodyCs = getComputedStyle(body);
+    const padY = (parseFloat(bodyCs.paddingTop) || 0) + (parseFloat(bodyCs.paddingBottom) || 0);
+    height = Math.max(
+      height,
+      root.offsetTop + root.offsetHeight + padY,
+      root.getBoundingClientRect().height + padY,
+      root.scrollHeight + padY,
+    );
+  }
+
+  height = Math.max(
+    height,
     doc.scrollHeight,
     doc.offsetHeight,
     body.scrollHeight,
     body.offsetHeight,
-    root?.scrollHeight || 0,
-    root?.offsetHeight || 0,
-  )) + 16;
+  );
+
+  return Math.ceil(height + 20);
 }
 
 function syncEmbedHeight() {
   if (!isEmbedded()) return;
-  window.parent.postMessage({ type: "dd-resize", height: measureEmbedHeight() }, "*");
+  const height = measureEmbedHeight();
+  const payload = { type: "dd-resize", height };
+  try {
+    window.parent.postMessage(payload, "*");
+  } catch {
+    /* ignore */
+  }
 }
 
 function scheduleEmbedResize() {
@@ -672,7 +692,13 @@ function scheduleEmbedResize() {
   embedResizeTimer = setTimeout(() => {
     syncEmbedHeight();
     requestAnimationFrame(syncEmbedHeight);
-  }, 80);
+  }, 50);
+}
+
+function burstEmbedResize() {
+  if (!isEmbedded()) return;
+  scheduleEmbedResize();
+  [200, 500, 1000, 1800].forEach((ms) => setTimeout(scheduleEmbedResize, ms));
 }
 
 function initEmbedResize() {
@@ -680,12 +706,13 @@ function initEmbedResize() {
   document.body.classList.add("dd-embedded");
   window.addEventListener("resize", scheduleEmbedResize);
   window.addEventListener("orientationchange", scheduleEmbedResize);
+  window.addEventListener("load", burstEmbedResize);
   if (typeof ResizeObserver !== "undefined") {
     embedResizeObserver = new ResizeObserver(scheduleEmbedResize);
     if (app.root) embedResizeObserver.observe(app.root);
     embedResizeObserver.observe(document.body);
   }
-  scheduleEmbedResize();
+  burstEmbedResize();
 }
 
 function copyViaExecCommand(text, onSuccess, onFail) {

@@ -1,0 +1,102 @@
+<!-- ============================================================
+     DAILY DILEMMA — PREMIUM PAGE EMBED
+     Paste ALL of this into a Code block on your MEMBERS-ONLY
+     (paywalled) Squarespace page — the page only paying members
+     can open. Loading this page unlocks Premium in the game and
+     keeps it unlocked across your site for ~30 days per visit.
+
+     Do NOT use this block on your free/public page — use the
+     normal squarespace-code-block.html there instead.
+
+     (While logged into Squarespace the scripts are disabled in
+     safe mode; test in a private/incognito window.)
+     ============================================================ -->
+
+<iframe
+  id="dd-game-frame"
+  src="https://forgeagentanonymuss.github.io/daily-dilemma/?join=https%3A%2F%2Fwww.the-daily-dilemma.com%2Fgo-premium"
+  title="Daily Dilemma"
+  allow="clipboard-write"
+  style="width:100%;height:520px;min-height:0;border:none;border-radius:12px;overflow:hidden;display:block;"
+  loading="eager"
+></iframe>
+
+<script>
+(function () {
+  var GAME = "https://forgeagentanonymuss.github.io"; // origin of the hosted game
+  var ALLOWED = {}; ALLOWED[GAME] = true;
+
+  // How long each visit keeps Premium unlocked (days). Members who keep
+  // their subscription will re-open this page and refresh it; if they
+  // cancel they lose access to this page and Premium lapses after this.
+  var LEASE_DAYS = 30;
+
+  // OPTIONAL hardening. Paste the same secret you set in the Worker
+  // (run:  npx wrangler secret put UNLOCK_TOKEN). Leave "" to rely on
+  // page-access gating only (the default — works with zero extra setup).
+  var UNLOCK_TOKEN = "";
+
+  function grantPremium(frame) {
+    try {
+      var msg = { type: "dd-premium-grant", days: LEASE_DAYS };
+      if (UNLOCK_TOKEN) msg.token = UNLOCK_TOKEN;
+      frame.contentWindow.postMessage(msg, GAME);
+    } catch (e) {}
+  }
+
+  function resizeFrames(height) {
+    var h = Math.max(520, Math.min(height, 2400));
+    document.querySelectorAll('iframe[src*="daily-dilemma"], #dd-game-frame').forEach(function (frame) {
+      frame.style.height = h + "px";
+      frame.style.minHeight = "0";
+      frame.style.overflow = "hidden";
+      frame.setAttribute("scrolling", "no");
+    });
+  }
+
+  function poke(frame) {
+    try { frame.contentWindow.postMessage({ type: "dd-request-resize" }, GAME); } catch (e) {}
+    grantPremium(frame);
+  }
+
+  function wireFrame(frame) {
+    if (frame.dataset.ddWired === "1") return;
+    frame.dataset.ddWired = "1";
+    frame.addEventListener("load", function () {
+      poke(frame);
+      [200, 600, 1500, 3000].forEach(function (ms) { setTimeout(function () { poke(frame); }, ms); });
+    });
+    poke(frame);
+  }
+
+  window.addEventListener("message", function (e) {
+    if (!ALLOWED[e.origin] || !e.data) return;
+
+    // The game asks "am I premium?" — answer yes (this page is members-only).
+    if (e.data.type === "dd-premium-check") {
+      document.querySelectorAll('iframe[src*="daily-dilemma"], #dd-game-frame').forEach(grantPremium);
+      return;
+    }
+    if (e.data.type === "dd-modal") {
+      var lock = !!e.data.open;
+      document.documentElement.style.overflow = lock ? "hidden" : "";
+      document.body.style.overflow = lock ? "hidden" : "";
+      return;
+    }
+    if (e.data.type === "dd-resize" && typeof e.data.height === "number") {
+      resizeFrames(e.data.height);
+    }
+  });
+
+  function boot() {
+    document.querySelectorAll('iframe[src*="daily-dilemma"], #dd-game-frame').forEach(wireFrame);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+  window.addEventListener("load", boot);
+})();
+</script>

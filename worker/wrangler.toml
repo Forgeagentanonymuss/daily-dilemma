@@ -1,0 +1,34 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "daily-dilemma-votes"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+
+# ── Durable Object bindings ─────────────────────────────────────────
+# TALLIES: one instance per dilemma id (atomic vote counters)
+# RATE:    one instance per visitor IP (token-bucket rate limiter)
+[[durable_objects.bindings]]
+name = "TALLIES"
+class_name = "TallyObject"
+
+[[durable_objects.bindings]]
+name = "RATE"
+class_name = "RateLimiter"
+
+# SQLite-backed Durable Objects are required on the Workers Free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TallyObject", "RateLimiter"]
+
+# ── Settings ────────────────────────────────────────────────────────
+[vars]
+# Comma-separated list of origins allowed to call this Worker from a browser.
+# Set this to lock the endpoint to YOUR sites. Leave as "" to allow any origin.
+# Example:
+# ALLOWED_ORIGINS = "https://forgeagentanonymuss.github.io,https://the-daily-dilemma.com,https://www.the-daily-dilemma.com"
+ALLOWED_ORIGINS = ""
+
+# "false" disables the cold-start baseline (pure real data from vote #1).
+SEED_VOTES = "true"
+
+# "false" disables per-IP rate limiting.
+RATE_LIMIT = "true"

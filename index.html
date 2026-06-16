@@ -4,12 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Daily Dilemma</title>
-  <meta name="description" content="Pick a side. Argue about it later. Daily would-you-rather, Quick Play, categories, streaks, achievements — embeddable freemium mini-game.">
-  <meta name="theme-color" content="#e8f0ec">
-  <link rel="stylesheet" href="style.css?v=12">
+  <meta name="description" content="Pick a side. Argue about it later. One impossible would-you-rather every day — with streaks, stats, and the world's split revealed.">
+  <meta name="theme-color" content="#ece4d6">
+  <link rel="preload" href="fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=21">
   <script>
     window.DD_SHARE_URL = "https://the-daily-dilemma.com";
     window.DD_PREMIUM_URL = "https://www.the-daily-dilemma.com/go-premium";
+
+    // ── Real premium unlock ────────────────────────────────────────
+    // The game only accepts a premium grant from these parent origins
+    // (your own site). Edit to match your domain(s).
+    window.DD_PREMIUM_ORIGINS = [
+      "https://the-daily-dilemma.com",
+      "https://www.the-daily-dilemma.com"
+    ];
+
+    // ── Real vote tallies ──────────────────────────────────────────
+    // Paste your deployed Cloudflare Worker URL here to show real,
+    // worldwide vote splits. Leave empty to use the built-in local split.
+    // Example: "https://daily-dilemma-votes.yourname.workers.dev"
+    window.DD_VOTE_API = "";
   </script>
   <script>
     if (window.self !== window.top) {
@@ -21,6 +37,6 @@
   <main id="app" class="shell" aria-live="polite" role="main">
     <p class="loading">Loading Daily Dilemma…</p>
   </main>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=21"></script>
 </body>
 </html>

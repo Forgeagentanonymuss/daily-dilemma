@@ -24,15 +24,92 @@ const TAGLINE_SUB = "One impossible choice. Every day.";
 const QUICK_FREE_LIMIT = 5;
 const CATEGORY_SESSION_SIZE = 4;
 const PREMIUM_SHIELDS = 3;
+const PREMIUM_LEASE_DAYS = 30;
 const PREMIUM_PRICE_LABEL = "£2.99/mo";
 const PREMIUM_PAYWALL_URL = "https://www.the-daily-dilemma.com/go-premium";
 const SHARE_SITE_URL = "https://the-daily-dilemma.com";
 
+/* ── Real vote tallies (optional Cloudflare Worker) ──────────────────
+   Set window.DD_VOTE_API in index.html to your Worker URL to enable.
+   When empty, the app falls back to the local deterministic split. */
+const VOTE_API = (typeof window !== "undefined" && window.DD_VOTE_API)
+  ? String(window.DD_VOTE_API).replace(/\/+$/, "")
+  : "";
+
+function isOfficialId(id) { return typeof id === "number" && Number.isInteger(id); }
+
+function apiTimeout(ms = 4500) {
+  const c = new AbortController();
+  return { signal: c.signal, done: setTimeout(() => c.abort(), ms) };
+}
+
+async function apiFetchSplit(id) {
+  if (!VOTE_API) return null;
+  const t = apiTimeout();
+  try {
+    const r = await fetch(`${VOTE_API}/split?id=${encodeURIComponent(id)}`, { signal: t.signal });
+    return r.ok ? await r.json() : null;
+  } catch { return null; } finally { clearTimeout(t.done); }
+}
+
+async function apiSubmitVote(id, choice) {
+  if (!VOTE_API) return null;
+  const t = apiTimeout();
+  try {
+    const r = await fetch(`${VOTE_API}/vote`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, choice }),
+      signal: t.signal,
+    });
+    return r.ok ? await r.json() : null;
+  } catch { return null; } finally { clearTimeout(t.done); }
+}
+
+/* Patch the on-screen results split with real numbers once they arrive. */
+function patchResultSplit(dilemma, choice, data) {
+  if (!data || typeof data.pctA !== "number" || !app.root) return;
+  const pctA = Math.max(0, Math.min(100, Math.round(data.pctA)));
+  const pctB = 100 - pctA;
+  const root = app.root;
+  const fillA = root.querySelector(".split-card .fill.a");
+  const fillB = root.querySelector(".split-card .fill.b");
+  if (!fillA || !fillB) return;
+  fillA.style.width = `${pctA}%`;
+  fillB.style.width = `${pctB}%`;
+  const pcts = root.querySelectorAll(".split-row .split-pct");
+  if (pcts[0]) pcts[0].textContent = `${pctA}%`;
+  if (pcts[1]) pcts[1].textContent = `${pctB}%`;
+  const mine = choice === "a" ? pctA : pctB;
+  const pickPct = root.querySelector(".pick-pct");
+  if (pickPct) pickPct.textContent = `${mine}% agreement`;
+  const hl = root.querySelector(".results-headline");
+  if (hl) hl.textContent = resultHeadline(choice, pctA);
+  const sub = root.querySelector(".results-sub");
+  if (sub) sub.textContent = resultMessage(choice, pctA);
+  // Persist real pctA for today's daily so re-opens and shares reflect it.
+  const today = app.today;
+  if (app.state.daily[today] && app.state.daily[today].dilemmaId === dilemma.id) {
+    app.state.daily[today].pctA = pctA;
+    saveState(app.state);
+  }
+}
+
+/* Submit a vote (or just read) and patch the visible split when it returns. */
+function syncResultSplit(dilemma, choice, didVote) {
+  if (!VOTE_API || !isOfficialId(dilemma.id)) return;
+  const p = didVote ? apiSubmitVote(dilemma.id, choice) : apiFetchSplit(dilemma.id);
+  p.then((data) => patchResultSplit(dilemma, choice, data)).catch(() => {});
+}
+
 const CATEGORIES = [
-  { id: "family", label: "Family", icon: "cat_family", blurb: "Table-friendly debates" },
-  { id: "adult", label: "Adult", icon: "cat_adult", blurb: "Life, work & grown-up chaos" },
+  { id: "family", label: "Family", icon: "cat_family", blurb: "Around-the-table debates" },
+  { id: "adult", label: "Grown-Up", icon: "cat_adult", blurb: "Work, money & modern life" },
   { id: "absurd", label: "Absurd", icon: "cat_absurd", blurb: "Delightfully unhinged" },
 ];
+
+const CATEGORY_LABELS = { family: "Family", adult: "Grown-Up", absurd: "Absurd" };
+function catLabel(id) { return CATEGORY_LABELS[id] || id; }
 
 const ACHIEVEMENTS = [
   { id: "first_play", icon: "ach_first_play", title: "First Play", desc: "Answer your first dilemma" },
@@ -105,7 +182,7 @@ const SOCIAL_PLATFORMS = [
 
 const ACTION_CARDS = [
   { action: "quick-play", icon: "bolt", title: "Quick Play", desc: "Lightning-round dilemmas", badge: true },
-  { action: "categories", icon: "grid", title: "Categories", desc: "Family, adult & absurd packs" },
+  { action: "categories", icon: "grid", title: "Categories", desc: "Family, grown-up & absurd packs" },
   { action: "history", icon: "scroll", title: "History", desc: "Every brave pick you've made" },
   { action: "stats", icon: "chart", title: "My Stats", desc: "Your debate personality" },
   { action: "achievements", icon: "trophy", title: "Achievements", desc: "Badges for the bold" },
@@ -246,6 +323,8 @@ function defaultState() {
     longestStreak: 0,
     lastPlayDate: null,
     isPremium: false,
+    premiumLease: 0,
+    devPremium: false,
     shields: PREMIUM_SHIELDS,
     onboarded: false,
     shareCount: 0,
@@ -301,7 +380,24 @@ function normalizeState(s) {
   merged.categoryCompleted = { ...base.categoryCompleted, ...(s.categoryCompleted || {}) };
   merged.categoryFreeTrialUsed = !!s.categoryFreeTrialUsed;
   merged.quickPlaysToday = s.quickPlaysToday || { date: dateKey(), count: 0 };
+  merged.premiumLease = Number(s.premiumLease) || 0;
+  merged.devPremium = !!s.devPremium;
+  merged.isPremium = premiumActive(merged); // real premium comes from a valid lease (or dev override)
   return ensureCategoryTrialState(merged);
+}
+
+/* Premium is "active" while an unexpired lease exists (granted by the
+   members-only Squarespace page), or via the local dev override. */
+function premiumActive(state) {
+  const leaseOk = typeof state.premiumLease === "number" && state.premiumLease > Date.now();
+  return leaseOk || state.devPremium === true;
+}
+
+function grantPremiumLease(state, days = PREMIUM_LEASE_DAYS) {
+  const span = Math.max(1, Number(days) || PREMIUM_LEASE_DAYS) * 86400000;
+  state.premiumLease = Date.now() + span;
+  state.isPremium = true;
+  state.shields = Math.max(state.shields || 0, PREMIUM_SHIELDS);
 }
 
 function ensureCategoryTrialState(state) {
@@ -637,7 +733,7 @@ function saveImportedDilemma(imported) {
 
 function playCustomDilemma(dilemma) {
   app.session = { mode: "quick", dilemma };
-  renderVoteScreen(dilemma, `Your dilemma · <span class="tag">${dilemma.category}</span>`, (choice) => {
+  renderVoteScreen(dilemma, `Your dilemma · <span class="tag">${catLabel(dilemma.category)}</span>`, (choice) => {
     const { pctA } = recordPlay(app.state, dilemma, choice, "quick", app.today);
     saveState(app.state);
     renderResultsScreen(dilemma, choice, pctA, { meta: "Your creation", mode: "quick" });
@@ -649,7 +745,7 @@ function playImportedOnce(imported) {
   app.session = { mode: "quick", dilemma, ephemeral: true };
   renderVoteScreen(
     dilemma,
-    `Shared dilemma · <span class="tag">${dilemma.category}</span>`,
+    `Shared dilemma · <span class="tag">${catLabel(dilemma.category)}</span>`,
     (choice) => {
       const { pctA } = recordPlay(app.state, dilemma, choice, "quick", app.today);
       saveState(app.state);
@@ -820,6 +916,75 @@ function initEmbedResize() {
   }
   burstEmbedResize();
   startEmbedPing();
+}
+
+/* ── Real premium unlock via the members-only Squarespace page ────────
+   That page can only be loaded by paying members, so when it posts a
+   trusted "dd-premium-grant" we extend a time-bound premium lease.
+   The lease auto-renews on each visit and lapses ~PREMIUM_LEASE_DAYS
+   after a member stops being able to load the page (i.e. churn). */
+function premiumTrustedOrigins() {
+  if (typeof window !== "undefined" && Array.isArray(window.DD_PREMIUM_ORIGINS) && window.DD_PREMIUM_ORIGINS.length) {
+    return window.DD_PREMIUM_ORIGINS.map(String);
+  }
+  return PARENT_ORIGINS;
+}
+
+function applyPremiumGrant(days) {
+  const wasPremium = app.state.isPremium;
+  grantPremiumLease(app.state, days);
+  const unlocked = [];
+  checkAchievements(app.state, app.dilemmas, unlocked);
+  saveState(app.state);
+  if (!wasPremium) {
+    render();
+    launchConfetti();
+    showToast("Premium unlocked — enjoy the full game!");
+  } else {
+    render();
+  }
+}
+
+function requestPremiumGrant() {
+  if (!isEmbedded()) return;
+  const payload = { type: "dd-premium-check" };
+  premiumTrustedOrigins().forEach((o) => {
+    try { window.parent.postMessage(payload, o); } catch { /* ignore */ }
+  });
+  try { window.parent.postMessage(payload, "*"); } catch { /* ignore */ }
+}
+
+/* Optional hardening: if the premium page includes a token AND a validator
+   (the Worker) is configured, verify it server-side before granting. Fails open
+   on network/server errors so a Worker outage never locks out paying members. */
+async function validateUnlockToken(token) {
+  if (!VOTE_API) return true; // no validator -> rely on the page-access gate
+  const t = apiTimeout();
+  try {
+    const r = await fetch(`${VOTE_API}/unlock?token=${encodeURIComponent(token)}`, { signal: t.signal });
+    if (!r.ok) return true; // server error -> don't lock members out
+    const data = await r.json();
+    return !!(data && data.premium === true);
+  } catch { return true; } finally { clearTimeout(t.done); }
+}
+
+function initPremiumBridge() {
+  window.addEventListener("message", (e) => {
+    const data = e.data;
+    if (!data || data.type !== "dd-premium-grant") return;
+    if (e.source && e.source !== window.parent) return;       // must come from the embedding page
+    if (!premiumTrustedOrigins().includes(e.origin)) return;  // …and from a trusted origin
+    const days = Number(data.days) > 0 ? Number(data.days) : PREMIUM_LEASE_DAYS;
+    if (data.token) {
+      validateUnlockToken(String(data.token)).then((ok) => { if (ok) applyPremiumGrant(days); });
+    } else {
+      applyPremiumGrant(days);
+    }
+  });
+  if (isEmbedded()) {
+    requestPremiumGrant();
+    [400, 1200, 3000].forEach((ms) => setTimeout(requestPremiumGrant, ms));
+  }
 }
 
 function copyViaExecCommand(text, onSuccess, onFail) {
@@ -1023,19 +1188,21 @@ function recordPlay(state, dilemma, choice, mode, today = dateKey()) {
 function resultHeadline(choice, pctA) {
   const mine = choice === "a" ? pctA : 100 - pctA;
   const maj = pctA >= 50 ? "a" : "b";
-  if (mine >= 65) return "The crowd stands with you!";
-  if (choice !== maj && mine <= 35) return "A lone lightning bolt — magnificent.";
-  if (choice !== maj) return "You picked the road less traveled.";
-  if (Math.abs(pctA - 50) <= 5) return "Perfectly, beautifully divided.";
-  return "A fine pick — the room approves.";
+  if (mine >= 70) return "The crowd is firmly with you.";
+  if (mine >= 60) return "Most of the room agrees.";
+  if (choice !== maj && mine <= 30) return "A bold, lonely stand — respect.";
+  if (choice !== maj) return "You took the road less travelled.";
+  if (Math.abs(pctA - 50) <= 5) return "Split right down the middle.";
+  return "A solid pick — opinion's divided.";
 }
 
 function resultMessage(choice, pctA) {
   const mine = choice === "a" ? pctA : 100 - pctA;
   const maj = pctA >= 50 ? "a" : "b";
-  if (choice === maj && mine >= 60) return `${mine}% chose the same side. You found your people.`;
-  if (choice !== maj) return `Only ${mine}% dared agree. Tell them why they're wrong.`;
-  if (Math.abs(pctA - 50) <= 5) return "Fifty-fifty. The table will never agree. Perfect.";
+  if (choice === maj && mine >= 60) return `${mine}% went the same way. You've found your people.`;
+  if (choice !== maj && mine <= 30) return `Only ${mine}% dared to join you. Go on, defend it.`;
+  if (choice !== maj) return `${mine}% agreed with you. The rest are wrong, obviously.`;
+  if (Math.abs(pctA - 50) <= 5) return "Fifty-fifty. This one belongs in the group chat.";
   return `${mine}% saw it your way — worth a friendly argument.`;
 }
 
@@ -1071,7 +1238,7 @@ function showToast(msg) {
 function launchConfetti() {
   const wrap = document.createElement("div");
   wrap.className = "confetti-wrap";
-  const colors = ["#f4c95f", "#4d7d6e", "#c45c7a", "#6b5b7a", "#fffaf5", "#d4a84a"];
+  const colors = ["#f1c14e", "#2f6f5d", "#c33f5d", "#d99f2b", "#fffdf9", "#3c8a73"];
   for (let i = 0; i < 36; i++) {
     const p = document.createElement("span");
     p.className = "confetti" + (i % 3 === 0 ? " round" : "");
@@ -1114,15 +1281,15 @@ function openModal(title, bodyHtml, actionsHtml = "", opts = {}) {
 
 function premiumBenefitsHtml() {
   const items = [
-    "Unlimited Quick Play",
-    "Create & share custom dilemmas",
-    `${PREMIUM_SHIELDS} streak shields`,
-    "Creator achievements",
+    "Unlimited Quick Play — no daily limit",
+    "Every category pack, unlocked",
+    "Create & share your own dilemmas",
+    `${PREMIUM_SHIELDS} streak shields to save your run`,
   ];
   return `<ul class="benefits">
     ${items.map((t) => `<li>${icon("check", "ico-check")}<span>${t}</span></li>`).join("")}
   </ul>
-  <p class="price-hint"><strong>${PREMIUM_PRICE_LABEL}</strong> · Cancel anytime</p>`;
+  <p class="price-hint"><strong>${PREMIUM_PRICE_LABEL}</strong> · Cancel anytime · Keep your streak</p>`;
 }
 
 function bindChoicePress(root) {
@@ -1135,8 +1302,8 @@ function bindChoicePress(root) {
 }
 
 function showUpsellModal() {
-  const backdrop = openModal("Unlock Premium", `
-    <p class="modal-lead">Play without limits. Create dilemmas. Protect your streak.</p>
+  const backdrop = openModal("Go Premium", `
+    <p class="modal-lead">Hooked on the daily? Premium lifts every limit — play as much as you like, unlock every pack, and protect the streak you've built.</p>
     ${premiumBenefitsHtml()}`, `
     <button class="btn ghost" data-close>Maybe later</button>
     <button class="btn premium-cta" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`, { premium: true });
@@ -1222,8 +1389,9 @@ function bindDevBar() {
   app.root.querySelectorAll("[data-dev]").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.dataset.dev === "premium") {
-        app.state.isPremium = !app.state.isPremium;
-        if (app.state.isPremium) app.state.shields = PREMIUM_SHIELDS;
+        app.state.devPremium = !app.state.devPremium;
+        app.state.isPremium = premiumActive(app.state);
+        if (app.state.isPremium) app.state.shields = Math.max(app.state.shields || 0, PREMIUM_SHIELDS);
         saveState(app.state);
         render();
         return;
@@ -1301,7 +1469,7 @@ function renderHome() {
       <div class="teaser card-panel fresh">
         <div class="teaser-head">
           <span class="status-chip fresh-chip">${icon("quest", "ico-chip")} Today's impossible choice</span>
-          <span class="tag tag-sage">${dilemma.category}</span>
+          <span class="tag tag-sage">${catLabel(dilemma.category)}</span>
         </div>
         <div class="dilemma-stack">
           <p class="teaser-opt">${escapeHtml(dilemma.a)}</p>
@@ -1459,6 +1627,8 @@ function renderResultsScreen(dilemma, choice, pctA, opts = {}) {
   }
   scheduleEmbedResize();
   setTimeout(scheduleEmbedResize, 120);
+  // Real vote tallies: POST when a fresh vote was just cast, else read-only refresh.
+  syncResultSplit(dilemma, choice, !!opts.vote);
 }
 
 function startDaily() {
@@ -1474,7 +1644,7 @@ function startDaily() {
     });
     return;
   }
-  renderVoteScreen(dilemma, `${today} · <span class="tag">daily</span> · <span class="tag">${dilemma.category}</span>`, (choice) => {
+  renderVoteScreen(dilemma, `${today} · <span class="tag">daily</span> · <span class="tag">${catLabel(dilemma.category)}</span>`, (choice) => {
     const streak = updateStreak(state, today);
     const { pctA } = recordPlay(state, dilemma, choice, "daily", today);
     state.daily[today] = { choice, dilemmaId: dilemma.id, pctA };
@@ -1492,6 +1662,7 @@ function startDaily() {
       meta: `${today} · streak ${streak}`,
       title: "Today's split",
       mode: "daily",
+      vote: true,
     });
   });
 }
@@ -1506,7 +1677,7 @@ function startQuick(fromResults = false) {
   const avoid = fromResults && app.session?.lastId ? app.session.lastId : null;
   const dilemma = pickRandomDilemma(pool, avoid);
   app.session = { mode: "quick", dilemma, lastId: dilemma.id };
-  renderVoteScreen(dilemma, `<span class="tag">quick play</span> · <span class="tag">${dilemma.category}</span>`, (choice) => {
+  renderVoteScreen(dilemma, `<span class="tag">quick play</span> · <span class="tag">${catLabel(dilemma.category)}</span>`, (choice) => {
     bumpQuickPlay(app.state, app.today);
     const { pctA } = recordPlay(app.state, dilemma, choice, "quick", app.today);
     const unlocked = [];
@@ -1519,6 +1690,7 @@ function startQuick(fromResults = false) {
       meta: `Quick Play · ${remLabel}`,
       title: "Quick split",
       mode: "quick",
+      vote: true,
       actionsHtml: `
         <button type="button" class="btn share glow" data-share>${icon("share", "ico-btn")} Share</button>
         <button type="button" class="btn primary glow" data-action="play-another">${icon("bolt", "ico-btn")} Play Another</button>
@@ -1579,9 +1751,10 @@ function renderCategoryStep() {
   const total = session.queue.length;
   renderVoteScreen(
     dilemma,
-    `<span class="tag">${session.category}</span> · <span class="session-badge">${step}/${total} session</span>`,
+    `<span class="tag">${catLabel(session.category)}</span> · <span class="session-badge">${step}/${total} session</span>`,
     (choice) => {
       const { pctA } = recordPlay(state, dilemma, choice, "category", today);
+      if (VOTE_API && isOfficialId(dilemma.id)) apiSubmitVote(dilemma.id, choice);
       session.results = session.results || [];
       session.results.push({ dilemma, choice, pctA });
       session.index += 1;
@@ -1606,11 +1779,11 @@ function renderCategoryComplete() {
   const { session } = app;
   app.root.innerHTML = `
     <div class="view view-enter">
-      ${headerHtml(`${session.category} complete`)}
+      ${headerHtml(`${catLabel(session.category)} complete`)}
       <div class="card-panel center celebrate-card">
         <div class="big-emoji">🎉</div>
         <h2 class="celebrate-title">Session complete!</h2>
-        <p class="soft">You cleared ${session.queue.length} <strong>${session.category}</strong> dilemmas.</p>
+        <p class="soft">You cleared ${session.queue.length} <strong>${catLabel(session.category)}</strong> dilemmas.</p>
         ${app.state.isPremium || !app.state.categoryFreeTrialUsed
     ? `<button type="button" class="btn primary glow" data-nav="categories">Explore more</button>`
     : `<button type="button" class="btn premium-cta glow" data-subscribe>${icon("spark", "ico-btn")} Subscribe — ${PREMIUM_PRICE_LABEL}</button>`}
@@ -1684,7 +1857,7 @@ function renderStats() {
         ${["family", "adult", "absurd"].map((c) => {
     const n = stats.byCat[c] || 0;
     const pct = Math.round((n / totalCat) * 100);
-    return `<div class="break-row"><span>${c}</span><div class="mini-bar"><div style="width:${pct}%"></div></div><span>${n}</span></div>`;
+    return `<div class="break-row"><span>${catLabel(c)}</span><div class="mini-bar"><div style="width:${pct}%"></div></div><span>${n}</span></div>`;
   }).join("")}
       </div>
       <div class="card-panel section-card">
@@ -1899,7 +2072,7 @@ function showCreateModal() {
     <label class="field">Category
       <select id="cCat" class="input">
         <option value="family">Family</option>
-        <option value="adult">Adult</option>
+        <option value="adult">Grown-Up</option>
         <option value="absurd">Absurd</option>
       </select>
     </label>
@@ -2025,6 +2198,7 @@ async function init() {
 
   render();
   initEmbedResize();
+  initPremiumBridge();
 
   if (pendingImport) {
     requestAnimationFrame(() => showImportedShareModal(pendingImport));

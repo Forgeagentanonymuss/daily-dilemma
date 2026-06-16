@@ -1,0 +1,70 @@
+<!-- Paste ALL of this into your Squarespace Code block (replace what's there now).
+     Do NOT paste into a text block or site header — only the Code block on the homepage.
+     While logged into Squarespace, scripts are disabled (safe mode). Test in a private window. -->
+
+<iframe
+  id="dd-game-frame"
+  src="https://forgeagentanonymuss.github.io/daily-dilemma/?join=https%3A%2F%2Fwww.the-daily-dilemma.com%2Fgo-premium"
+  title="Daily Dilemma"
+  allow="clipboard-write"
+  style="width:100%;height:520px;min-height:0;border:none;border-radius:12px;overflow:hidden;display:block;"
+  loading="eager"
+></iframe>
+
+<script>
+(function () {
+  var ALLOWED = { "https://forgeagentanonymuss.github.io": true };
+  var GAME = "https://forgeagentanonymuss.github.io";
+
+  function resizeFrames(height) {
+    var h = Math.max(520, Math.min(height, 2400));
+    document.querySelectorAll('iframe[src*="daily-dilemma"], #dd-game-frame').forEach(function (frame) {
+      frame.style.height = h + "px";
+      frame.style.minHeight = "0";
+      frame.style.overflow = "hidden";
+      frame.setAttribute("scrolling", "no");
+    });
+  }
+
+  function requestChildResize(frame) {
+    try {
+      frame.contentWindow.postMessage({ type: "dd-request-resize" }, GAME);
+    } catch (e) {}
+  }
+
+  function wireFrame(frame) {
+    if (frame.dataset.ddWired === "1") return;
+    frame.dataset.ddWired = "1";
+    frame.addEventListener("load", function () {
+      requestChildResize(frame);
+      setTimeout(function () { requestChildResize(frame); }, 400);
+      setTimeout(function () { requestChildResize(frame); }, 1200);
+    });
+    requestChildResize(frame);
+  }
+
+  window.addEventListener("message", function (e) {
+    if (!ALLOWED[e.origin]) return;
+    if (!e.data) return;
+    if (e.data.type === "dd-modal") {
+      var lock = !!e.data.open;
+      document.documentElement.style.overflow = lock ? "hidden" : "";
+      document.body.style.overflow = lock ? "hidden" : "";
+      return;
+    }
+    if (e.data.type !== "dd-resize" || typeof e.data.height !== "number") return;
+    resizeFrames(e.data.height);
+  });
+
+  function boot() {
+    document.querySelectorAll('iframe[src*="daily-dilemma"], #dd-game-frame').forEach(wireFrame);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+  window.addEventListener("load", boot);
+})();
+</script>

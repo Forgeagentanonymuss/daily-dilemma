@@ -1,0 +1,14 @@
+{
+  "name": "daily-dilemma-votes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that stores real vote tallies for Daily Dilemma.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

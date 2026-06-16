@@ -9,6 +9,7 @@ const {
   encodeSharePayload, decodeSharePayload, customShareMessage,
   buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
   getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
+  canStartCategory, ensureCategoryTrialState,
 } = require("./app.js");
 
 const dilemmas = JSON.parse(
@@ -112,5 +113,17 @@ assert.ok(social.linkedin.includes("linkedin.com/sharing"), "linkedin share url"
 assert.equal(getPremiumPaywallUrl(), PREMIUM_PAYWALL_URL, "default paywall url");
 assert.ok(PREMIUM_PRICE_LABEL.includes("£"), "premium price uses GBP");
 assert.ok(!PREMIUM_PRICE_LABEL.includes("$"), "premium price not USD");
+
+const catState = defaultState();
+assert.equal(canStartCategory(catState), true, "fresh free user can trial categories once");
+catState.categoryFreeTrialUsed = true;
+assert.equal(canStartCategory(catState), false, "after trial categories require premium");
+catState.isPremium = true;
+assert.equal(canStartCategory(catState), true, "premium can play categories");
+
+const legacyCat = defaultState();
+legacyCat.history = [{ mode: "category", date: "2026-06-10", dilemmaId: 1, choice: "a", pctA: 50, category: "family" }];
+ensureCategoryTrialState(legacyCat);
+assert.equal(legacyCat.categoryFreeTrialUsed, true, "backfill trial from category history");
 
 console.log(`OK — ${dilemmas.length} dilemmas, index today=${i1} id=${dilemmas[i1].id}`);

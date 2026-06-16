@@ -1,102 +1,752 @@
 [
-  {"id": 1, "category": "family", "a": "Pizza for every dinner for a month", "b": "Never eat pizza again"},
-  {"id": 2, "category": "family", "a": "Kids choose the holiday destination", "b": "Parents choose but kids pick all activities"},
-  {"id": 3, "category": "family", "a": "Unlimited screen time on rainy days only", "b": "One hour screens every day no matter the weather"},
-  {"id": 4, "category": "family", "a": "Breakfast for dinner twice a week forever", "b": "No cereal allowed in the house ever again"},
-  {"id": 5, "category": "family", "a": "Pet dragon the size of a cat", "b": "Pet cat the size of a dragon"},
-  {"id": 6, "category": "family", "a": "School starts at 10am always", "b": "School finishes at 1pm always"},
-  {"id": 7, "category": "family", "a": "Every weekend is a camping trip", "b": "Every weekend is a cinema trip"},
-  {"id": 8, "category": "family", "a": "Parents must speak only in rhymes on Sundays", "b": "Kids must speak only in rhymes on Sundays"},
-  {"id": 9, "category": "family", "a": "Swimming pool in the garden", "b": "Trampoline room indoors"},
-  {"id": 10, "category": "family", "a": "Chocolate allowed before vegetables", "b": "Vegetables that taste like chocolate"},
-  {"id": 11, "category": "adult", "a": "Four-day work week at 90% pay", "b": "Three-day work week at 75% pay"},
-  {"id": 12, "category": "adult", "a": "Never do laundry again", "b": "Never do dishes again"},
-  {"id": 13, "category": "adult", "a": "Free flights anywhere twice a year", "b": "Free luxury hotels anywhere twice a year"},
-  {"id": 14, "category": "adult", "a": "Always know what people really think of you", "b": "Always say exactly what you think"},
-  {"id": 15, "category": "adult", "a": "Perfect memory for names", "b": "Perfect memory for faces"},
-  {"id": 16, "category": "adult", "a": "Live by the sea", "b": "Live in a forest"},
-  {"id": 17, "category": "adult", "a": "Read minds but only at work", "b": "Read minds but only at home"},
-  {"id": 18, "category": "adult", "a": "Coffee tastes like wine", "b": "Wine tastes like coffee"},
-  {"id": 19, "category": "adult", "a": "One extra hour of sleep every night", "b": "One extra hour of waking energy every day"},
-  {"id": 20, "category": "adult", "a": "Never sit in traffic again", "b": "Never queue in shops again"},
-  {"id": 21, "category": "absurd", "a": "Hands are slightly too small forever", "b": "Hands are slightly too big forever"},
-  {"id": 22, "category": "absurd", "a": "Every song has a kazoo solo", "b": "Every song has a bagpipe solo"},
-  {"id": 23, "category": "absurd", "a": "Must hop instead of walk on Tuesdays", "b": "Must whisper on Wednesdays"},
-  {"id": 24, "category": "absurd", "a": "Hair changes colour with your mood", "b": "Hair changes length with your mood"},
-  {"id": 25, "category": "absurd", "a": "Ducks think you are their leader", "b": "Pigeons think you owe them money"},
-  {"id": 26, "category": "absurd", "a": "Toast always lands butter-side up", "b": "Toast always lands butter-side up but only for you"},
-  {"id": 27, "category": "absurd", "a": "Speak every language but only while singing", "b": "Speak every language but only while dancing"},
-  {"id": 28, "category": "absurd", "a": "Shadow is always three seconds behind you", "b": "Shadow is always three seconds ahead of you"},
-  {"id": 29, "category": "absurd", "a": "Mandatory silly hat in all photos", "b": "Mandatory serious face in all photos"},
-  {"id": 30, "category": "absurd", "a": "Alarm clock is a rooster you do not own", "b": "Alarm clock is a polite but firm butler"},
-  {"id": 31, "category": "family", "a": "Build a blanket fort that never has to come down", "b": "Treehouse with a slide into the kitchen"},
-  {"id": 32, "category": "adult", "a": "All meetings are walks outside", "b": "All meetings are replaced by one perfect email"},
-  {"id": 33, "category": "absurd", "a": "Socks always match by magic", "b": "Socks always mismatch by law"},
-  {"id": 34, "category": "family", "a": "Board games every Friday night", "b": "Movie marathon every Friday night"},
-  {"id": 35, "category": "family", "a": "Parents get one veto per week", "b": "Kids get one veto per week"},
-  {"id": 36, "category": "family", "a": "Homework before any fun", "b": "One fun hour before homework starts"},
-  {"id": 37, "category": "family", "a": "Matching outfits on family outings", "b": "Wildly clashing outfits on purpose"},
-  {"id": 38, "category": "family", "a": "Bouncy castle in the living room", "b": "Indoor climbing wall"},
-  {"id": 39, "category": "family", "a": "Dessert first at restaurants", "b": "Never order dessert out again"},
-  {"id": 40, "category": "family", "a": "Sleepovers every weekend", "b": "Day trips every weekend"},
-  {"id": 41, "category": "family", "a": "Robots do all chores", "b": "Chores become mini-Olympics with medals"},
-  {"id": 42, "category": "family", "a": "Hour-long bedtime stories", "b": "Extra 30 minutes of lights-on play"},
-  {"id": 43, "category": "family", "a": "Kid-sized car to school", "b": "Flying scooter with training wheels"},
-  {"id": 44, "category": "family", "a": "Birthday every month for everyone", "b": "One epic combined birthday per year"},
-  {"id": 45, "category": "family", "a": "Ice cream for breakfast Saturdays", "b": "Pancakes for dinner Wednesdays"},
-  {"id": 46, "category": "family", "a": "Mandatory monthly talent show", "b": "Mandatory monthly silence hour"},
-  {"id": 47, "category": "family", "a": "Pets talk but only sass", "b": "Pets talk but only compliments"},
-  {"id": 48, "category": "family", "a": "Holidays always at grandma's", "b": "Holidays always at the beach"},
-  {"id": 49, "category": "family", "a": "No phones at the table ever", "b": "Phones allowed if screens are shared"},
-  {"id": 50, "category": "family", "a": "LEGO city that never gets dismantled", "b": "Art wall you can repaint daily"},
-  {"id": 51, "category": "family", "a": "Snow inside the house once a year", "b": "Rain only on the roof garden"},
-  {"id": 52, "category": "family", "a": "Kids control the car radio", "b": "Parents control radio but kids hold skip"},
-  {"id": 53, "category": "family", "a": "Early bedtime for extra weekend sleep", "b": "Late bedtime with midnight snacks"},
-  {"id": 54, "category": "family", "a": "Everyone learns one instrument", "b": "Everyone learns one sport"},
-  {"id": 55, "category": "family", "a": "One joke before every dinner", "b": "One gratitude before every dinner"},
-  {"id": 56, "category": "adult", "a": "Work from anywhere in the world", "b": "Perfect local office ten minutes away"},
-  {"id": 57, "category": "adult", "a": "Never cook again", "b": "Never clean again"},
-  {"id": 58, "category": "adult", "a": "Automatic tax filing forever", "b": "Automatic healthy meal plans forever"},
-  {"id": 59, "category": "adult", "a": "Speak every language fluently", "b": "Play every instrument passably"},
-  {"id": 60, "category": "adult", "a": "Ten extra years of life", "b": "Ten extra years of youth now"},
-  {"id": 61, "category": "adult", "a": "Famous for your hobby", "b": "Rich from a job you tolerate"},
-  {"id": 62, "category": "adult", "a": "Unlimited books forever", "b": "Unlimited vinyl records forever"},
-  {"id": 63, "category": "adult", "a": "Win every argument", "b": "Never argue again"},
-  {"id": 64, "category": "adult", "a": "Perfect weather whenever you're outdoors", "b": "Perfect sleep every single night"},
-  {"id": 65, "category": "adult", "a": "Mentor a hundred people", "b": "Be mentored by your hero for a year"},
-  {"id": 66, "category": "adult", "a": "Delete embarrassing memories", "b": "Delete painful memories"},
-  {"id": 67, "category": "adult", "a": "Always find parking instantly", "b": "Always catch the green light"},
-  {"id": 68, "category": "adult", "a": "Phone battery never dies", "b": "Internet never drops"},
-  {"id": 69, "category": "adult", "a": "Know the future one week ahead", "b": "Change one past decision"},
-  {"id": 70, "category": "adult", "a": "Live in your favorite decade's fashion", "b": "Keep today's tech in any era"},
-  {"id": 71, "category": "adult", "a": "Host dinner parties every week", "b": "Get invited to dinner every week"},
-  {"id": 72, "category": "adult", "a": "Commute by bike in perfect weather", "b": "Commute by train with a reserved seat"},
-  {"id": 73, "category": "adult", "a": "Paid sabbatical year every five years", "b": "Extra month off every year unpaid"},
-  {"id": 74, "category": "adult", "a": "Nap anywhere instantly", "b": "Focus anywhere instantly"},
-  {"id": 75, "category": "adult", "a": "House cleans itself nightly", "b": "Garden weeds itself weekly"},
-  {"id": 76, "category": "adult", "a": "Never receive junk email", "b": "Never receive junk mail"},
-  {"id": 77, "category": "adult", "a": "AI handles all scheduling", "b": "AI handles all small talk"},
-  {"id": 78, "category": "absurd", "a": "Sneezes sound like applause", "b": "Coughs sound like jazz drums"},
-  {"id": 79, "category": "absurd", "a": "Nose honks like a bicycle bell", "b": "Eyes flash like camera shutters when surprised"},
-  {"id": 80, "category": "absurd", "a": "Communicate only with pasta shapes", "b": "Communicate only with interpretive dance"},
-  {"id": 81, "category": "absurd", "a": "Clouds spell your mood overhead", "b": "Birds announce your arrival"},
-  {"id": 82, "category": "absurd", "a": "Shoes squeak the truth", "b": "Hats whisper gossip"},
-  {"id": 83, "category": "absurd", "a": "Mirrors show you as a cartoon", "b": "Photos show you as an oil painting"},
-  {"id": 84, "category": "absurd", "a": "Elevators only go sideways", "b": "Stairs only go in spirals"},
-  {"id": 85, "category": "absurd", "a": "Tea tastes like your favorite song", "b": "Coffee tastes like your least favorite chore"},
-  {"id": 86, "category": "absurd", "a": "Left shoe is always too loud", "b": "Right shoe is always too quiet"},
-  {"id": 87, "category": "absurd", "a": "High-five before opening any door", "b": "Bow before sitting in any chair"},
-  {"id": 88, "category": "absurd", "a": "Hair grows when you lie", "b": "Hair shrinks when you tell the truth"},
-  {"id": 89, "category": "absurd", "a": "Dreams broadcast on local radio", "b": "Thoughts appear as subtitles above your head"},
-  {"id": 90, "category": "absurd", "a": "Wallet only accepts compliments", "b": "Phone only charges on dad jokes"},
-  {"id": 91, "category": "absurd", "a": "Pets judge your outfit daily", "b": "Plants gossip about your habits"},
-  {"id": 92, "category": "absurd", "a": "Rain only on people who skip breakfast", "b": "Sun follows people who whistle"},
-  {"id": 93, "category": "absurd", "a": "Ride a tiny unicycle indoors", "b": "Moonwalk outdoors everywhere"},
-  {"id": 94, "category": "absurd", "a": "Belly button dispenses stickers", "b": "Ears dispense confetti on Tuesdays"},
-  {"id": 95, "category": "absurd", "a": "Half gravity on Mondays", "b": "Double gravity on Fridays"},
-  {"id": 96, "category": "absurd", "a": "All birds wear tiny ties", "b": "All fish wear tiny monocles"},
-  {"id": 97, "category": "absurd", "a": "Your laugh controls traffic lights", "b": "Your yawn opens automatic doors"},
-  {"id": 98, "category": "absurd", "a": "Socks taste like your favorite snack", "b": "Shoes smell like fresh bread"},
-  {"id": 99, "category": "absurd", "a": "Age one day per hour on your birthday", "b": "Stay the same age every leap day"},
-  {"id": 100, "category": "absurd", "a": "Theme song plays when you enter rooms", "b": "Laugh track follows your sentences"}
+  {
+    "id": 1,
+    "category": "family",
+    "a": "Pizza for every dinner for a month",
+    "b": "Never eat pizza again, ever"
+  },
+  {
+    "id": 2,
+    "category": "family",
+    "a": "A pet dragon the size of a cat",
+    "b": "A pet cat the size of a dragon"
+  },
+  {
+    "id": 3,
+    "category": "family",
+    "a": "A family pet that talks but only complains",
+    "b": "A pet that's silent but clearly judging you"
+  },
+  {
+    "id": 4,
+    "category": "family",
+    "a": "Every car journey is a sing-along",
+    "b": "Every car journey is total silence"
+  },
+  {
+    "id": 5,
+    "category": "family",
+    "a": "Kids pick the holiday, parents pick the food",
+    "b": "Parents pick the holiday, kids pick the food"
+  },
+  {
+    "id": 6,
+    "category": "family",
+    "a": "A birthday every month but no presents",
+    "b": "One birthday a year with double the presents"
+  },
+  {
+    "id": 7,
+    "category": "family",
+    "a": "A treehouse that's bigger on the inside",
+    "b": "A bedroom with a slide down to the kitchen"
+  },
+  {
+    "id": 8,
+    "category": "family",
+    "a": "Guaranteed snow every Christmas",
+    "b": "One extra week of summer holidays each year"
+  },
+  {
+    "id": 9,
+    "category": "family",
+    "a": "The dog fetches anything you name, once a day",
+    "b": "The cat answers one yes/no question a day, honestly"
+  },
+  {
+    "id": 10,
+    "category": "family",
+    "a": "Family game night that never ends in a row",
+    "b": "Family game night with absurdly high stakes"
+  },
+  {
+    "id": 11,
+    "category": "family",
+    "a": "Breakfast for dinner twice a week",
+    "b": "No cereal in the house ever again"
+  },
+  {
+    "id": 12,
+    "category": "family",
+    "a": "Grandma's cooking on tap, but she watches every bite",
+    "b": "A robot chef that's brilliant but a bit smug"
+  },
+  {
+    "id": 13,
+    "category": "family",
+    "a": "Your parents can read your texts",
+    "b": "You can read your parents' texts"
+  },
+  {
+    "id": 14,
+    "category": "family",
+    "a": "A holiday anywhere, but you all share one room",
+    "b": "A holiday close to home with a room each"
+  },
+  {
+    "id": 15,
+    "category": "family",
+    "a": "The trampoline is also your bed",
+    "b": "The bathtub is also a small pool"
+  },
+  {
+    "id": 16,
+    "category": "family",
+    "a": "A time machine that only reaches last weekend",
+    "b": "A teleporter that only reaches the corner shop"
+  },
+  {
+    "id": 17,
+    "category": "family",
+    "a": "Family photos where everyone looks amazing but no one remembers the day",
+    "b": "Blurry photos of days you'll never forget"
+  },
+  {
+    "id": 18,
+    "category": "family",
+    "a": "Your room tidies itself but hides everything",
+    "b": "Your room stays messy but you always find things"
+  },
+  {
+    "id": 19,
+    "category": "family",
+    "a": "School starts at 10am, finishes at 5pm",
+    "b": "School starts at 7am, finishes at 1pm"
+  },
+  {
+    "id": 20,
+    "category": "family",
+    "a": "The family group chat is muted forever",
+    "b": "The family group chat replies for you automatically"
+  },
+  {
+    "id": 21,
+    "category": "family",
+    "a": "Unlimited ice cream that melts in 30 seconds",
+    "b": "One ice cream a week that never melts"
+  },
+  {
+    "id": 22,
+    "category": "family",
+    "a": "Pancakes that flip themselves",
+    "b": "Toast that's always perfectly done"
+  },
+  {
+    "id": 23,
+    "category": "family",
+    "a": "Pause time for everyone but you, ten minutes a day",
+    "b": "Rewind your own day, once a week"
+  },
+  {
+    "id": 24,
+    "category": "family",
+    "a": "A garden that grows sweets",
+    "b": "A garden that grows money, very slowly"
+  },
+  {
+    "id": 25,
+    "category": "family",
+    "a": "The family dog ages backwards",
+    "b": "The family cat genuinely has nine lives"
+  },
+  {
+    "id": 26,
+    "category": "family",
+    "a": "You can talk to babies, but they only gossip",
+    "b": "You can talk to pets, but they only nag"
+  },
+  {
+    "id": 27,
+    "category": "family",
+    "a": "You pick the film but sit at the back",
+    "b": "Someone else picks but you get the best seat and snacks"
+  },
+  {
+    "id": 28,
+    "category": "family",
+    "a": "A magic backpack that holds anything",
+    "b": "Shoes that make you twice as fast"
+  },
+  {
+    "id": 29,
+    "category": "family",
+    "a": "Wake up as the parent for a day",
+    "b": "Wake up as the youngest for a day"
+  },
+  {
+    "id": 30,
+    "category": "family",
+    "a": "The car can fly, but only at walking pace",
+    "b": "The car drives itself, but always takes the scenic route"
+  },
+  {
+    "id": 31,
+    "category": "family",
+    "a": "A snowman that comes to life each winter",
+    "b": "A sandcastle that survives every tide"
+  },
+  {
+    "id": 32,
+    "category": "family",
+    "a": "Homework does itself but teaches you nothing",
+    "b": "Homework takes hours but you remember it forever"
+  },
+  {
+    "id": 33,
+    "category": "family",
+    "a": "A holiday where it rains chocolate",
+    "b": "A holiday where the sea is warm as a bath"
+  },
+  {
+    "id": 34,
+    "category": "family",
+    "a": "Your sibling must be nice to you on Mondays",
+    "b": "You get the front seat, forever"
+  },
+  {
+    "id": 35,
+    "category": "family",
+    "a": "Every bedtime story turns out to be true",
+    "b": "Every good dream comes back with a sequel"
+  },
+  {
+    "id": 36,
+    "category": "family",
+    "a": "A fridge that's always full of your favourites",
+    "b": "A wardrobe that always has the perfect outfit"
+  },
+  {
+    "id": 37,
+    "category": "family",
+    "a": "Movie nights that never get interrupted",
+    "b": "Snacks that magically never run out"
+  },
+  {
+    "id": 38,
+    "category": "family",
+    "a": "A swing set that gently launches you over the house",
+    "b": "A slide that loops the loop"
+  },
+  {
+    "id": 39,
+    "category": "family",
+    "a": "The whole family can teleport home from anywhere",
+    "b": "The whole family never gets lost again"
+  },
+  {
+    "id": 40,
+    "category": "family",
+    "a": "A robot that does every chore but hums constantly",
+    "b": "No robot, but chores take half the time"
+  },
+  {
+    "id": 41,
+    "category": "adult",
+    "a": "A four-day week at 90% pay",
+    "b": "A three-day week at 70% pay"
+  },
+  {
+    "id": 42,
+    "category": "adult",
+    "a": "Never do laundry again",
+    "b": "Never do the dishes again"
+  },
+  {
+    "id": 43,
+    "category": "adult",
+    "a": "Inbox at zero forever, but no searching old emails",
+    "b": "Keep every email, but the inbox is always 200 deep"
+  },
+  {
+    "id": 44,
+    "category": "adult",
+    "a": "Always know what people really think of you",
+    "b": "Never wonder, but never be flattered either"
+  },
+  {
+    "id": 45,
+    "category": "adult",
+    "a": "A brilliant boss who never remembers your name",
+    "b": "A mediocre boss who fights for you"
+  },
+  {
+    "id": 46,
+    "category": "adult",
+    "a": "Work from anywhere, but always on call",
+    "b": "One fixed desk, but truly off at 5pm"
+  },
+  {
+    "id": 47,
+    "category": "adult",
+    "a": "A city-centre flat the size of a shoebox",
+    "b": "A house an hour out with a real garden"
+  },
+  {
+    "id": 48,
+    "category": "adult",
+    "a": "Your salary doubles but your commute triples",
+    "b": "Your salary stays but you work from your sofa"
+  },
+  {
+    "id": 49,
+    "category": "adult",
+    "a": "Retire at 45 with just enough",
+    "b": "Retire at 65 with plenty"
+  },
+  {
+    "id": 50,
+    "category": "adult",
+    "a": "Find £200 in an old coat every month",
+    "b": "A guaranteed lie-in every single Sunday"
+  },
+  {
+    "id": 51,
+    "category": "adult",
+    "a": "Coffee that tastes like the finest wine",
+    "b": "Wine that tastes like the finest coffee"
+  },
+  {
+    "id": 52,
+    "category": "adult",
+    "a": "Always find a parking space",
+    "b": "Always get a seat on the train"
+  },
+  {
+    "id": 53,
+    "category": "adult",
+    "a": "Perfect memory for names",
+    "b": "Perfect memory for where you left things"
+  },
+  {
+    "id": 54,
+    "category": "adult",
+    "a": "A phone that never dies but is always a bit slow",
+    "b": "A fast phone you charge twice a day"
+  },
+  {
+    "id": 55,
+    "category": "adult",
+    "a": "Free flights anywhere, middle seat guaranteed",
+    "b": "Full price, but first class every time"
+  },
+  {
+    "id": 56,
+    "category": "adult",
+    "a": "Read minds, but only when people are bored",
+    "b": "Be invisible, but only in meetings"
+  },
+  {
+    "id": 57,
+    "category": "adult",
+    "a": "Your rent is frozen for ten years",
+    "b": "One completely mortgage-free year, starting now"
+  },
+  {
+    "id": 58,
+    "category": "adult",
+    "a": "Speak every language with a thick comedic accent",
+    "b": "Speak two languages flawlessly"
+  },
+  {
+    "id": 59,
+    "category": "adult",
+    "a": "A job you love that pays just enough",
+    "b": "A job you tolerate that pays double"
+  },
+  {
+    "id": 60,
+    "category": "adult",
+    "a": "Always know when someone's lying",
+    "b": "Always be believed, even when you're wrong"
+  },
+  {
+    "id": 61,
+    "category": "adult",
+    "a": "Never be stuck in traffic again",
+    "b": "Never wait on hold again"
+  },
+  {
+    "id": 62,
+    "category": "adult",
+    "a": "The gym is always empty when you arrive",
+    "b": "Your favourite restaurant always has a table"
+  },
+  {
+    "id": 63,
+    "category": "adult",
+    "a": "Unlimited holiday, but always reachable",
+    "b": "Four weeks off, completely unplugged"
+  },
+  {
+    "id": 64,
+    "category": "adult",
+    "a": "Meetings can never run over",
+    "b": "Emails can never be marked urgent"
+  },
+  {
+    "id": 65,
+    "category": "adult",
+    "a": "Sleep perfectly, but only six hours",
+    "b": "Sleep eight hours, occasionally badly"
+  },
+  {
+    "id": 66,
+    "category": "adult",
+    "a": "Win every argument, but people quietly resent it",
+    "b": "Lose gracefully and stay beloved"
+  },
+  {
+    "id": 67,
+    "category": "adult",
+    "a": "A mentor who's harsh but always right",
+    "b": "A cheerleader who's kind but vague"
+  },
+  {
+    "id": 68,
+    "category": "adult",
+    "a": "Move somewhere sunny, far from friends",
+    "b": "Stay put under grey skies, everyone you love nearby"
+  },
+  {
+    "id": 69,
+    "category": "adult",
+    "a": "A promotion with more money and more stress",
+    "b": "A sideways move with less of both"
+  },
+  {
+    "id": 70,
+    "category": "adult",
+    "a": "Always have the perfect comeback, an hour too late",
+    "b": "Never need one, because you genuinely don't care"
+  },
+  {
+    "id": 71,
+    "category": "adult",
+    "a": "Unlimited coffee, but only instant",
+    "b": "One perfect flat white a day"
+  },
+  {
+    "id": 72,
+    "category": "adult",
+    "a": "A clone who does your chores but takes half your luck",
+    "b": "Do your own chores, keep all your luck"
+  },
+  {
+    "id": 73,
+    "category": "adult",
+    "a": "Know the exact day you'll feel happiest this year",
+    "b": "Be completely surprised by it"
+  },
+  {
+    "id": 74,
+    "category": "adult",
+    "a": "Your bank warns you before every overspend",
+    "b": "Your calendar deletes pointless meetings on its own"
+  },
+  {
+    "id": 75,
+    "category": "adult",
+    "a": "Never get a parking ticket again",
+    "b": "Never catch a cold again"
+  },
+  {
+    "id": 76,
+    "category": "adult",
+    "a": "A weekend that lasts three days, but brutal Mondays",
+    "b": "A normal weekend with gentle Mondays"
+  },
+  {
+    "id": 77,
+    "category": "adult",
+    "a": "Your savings grow 1% a day, untouchable for a year",
+    "b": "A lump sum now, no growth"
+  },
+  {
+    "id": 78,
+    "category": "adult",
+    "a": "Always be ten minutes early, slightly anxious",
+    "b": "Always be five minutes late, perfectly calm"
+  },
+  {
+    "id": 79,
+    "category": "adult",
+    "a": "A fridge that restocks the basics by itself",
+    "b": "A washing machine that also folds"
+  },
+  {
+    "id": 80,
+    "category": "adult",
+    "a": "Be effortlessly tidy but a terrible cook",
+    "b": "Be a brilliant cook but hopelessly messy"
+  },
+  {
+    "id": 81,
+    "category": "absurd",
+    "a": "Hands slightly too small, forever",
+    "b": "Hands slightly too big, forever"
+  },
+  {
+    "id": 82,
+    "category": "absurd",
+    "a": "Ducks think you're their leader",
+    "b": "Pigeons think you owe them money"
+  },
+  {
+    "id": 83,
+    "category": "absurd",
+    "a": "Toast always lands butter-side up",
+    "b": "It lands butter-side up, but only when no one's watching"
+  },
+  {
+    "id": 84,
+    "category": "absurd",
+    "a": "Every song you hear gains a surprise kazoo solo",
+    "b": "Every film you watch gains one unexplained goose"
+  },
+  {
+    "id": 85,
+    "category": "absurd",
+    "a": "Your shadow is three seconds behind you",
+    "b": "Your reflection always waves first"
+  },
+  {
+    "id": 86,
+    "category": "absurd",
+    "a": "You sneeze glitter",
+    "b": "You hiccup tiny soap bubbles"
+  },
+  {
+    "id": 87,
+    "category": "absurd",
+    "a": "Animals understand you but find you hilarious",
+    "b": "Animals understand you but pretend not to"
+  },
+  {
+    "id": 88,
+    "category": "absurd",
+    "a": "Your phone autocorrects every word to 'moist'",
+    "b": "Your phone answers all texts as a pirate"
+  },
+  {
+    "id": 89,
+    "category": "absurd",
+    "a": "When you lie, a distant trumpet plays",
+    "b": "When you're right, a small puff of confetti appears"
+  },
+  {
+    "id": 90,
+    "category": "absurd",
+    "a": "You're immortal but always slightly peckish",
+    "b": "You age normally but your left elbow ages backwards"
+  },
+  {
+    "id": 91,
+    "category": "absurd",
+    "a": "Everything you touch becomes briefly warm",
+    "b": "Everything you say briefly rhymes"
+  },
+  {
+    "id": 92,
+    "category": "absurd",
+    "a": "A personal cloud that rains only compliments",
+    "b": "A personal spotlight that follows you, slightly off-centre"
+  },
+  {
+    "id": 93,
+    "category": "absurd",
+    "a": "You can teleport, but only to where you just were",
+    "b": "You can fly, but only one foot off the ground"
+  },
+  {
+    "id": 94,
+    "category": "absurd",
+    "a": "Your sneezes sound like a foghorn",
+    "b": "Your laugh sounds like a dial-up modem"
+  },
+  {
+    "id": 95,
+    "category": "absurd",
+    "a": "Bread is always warm when you hold it",
+    "b": "Cheese says your name when you open the fridge"
+  },
+  {
+    "id": 96,
+    "category": "absurd",
+    "a": "You can pause any music with a stern look",
+    "b": "You can fast-forward awkward chats by ten seconds"
+  },
+  {
+    "id": 97,
+    "category": "absurd",
+    "a": "Pigeons salute you on sight",
+    "b": "Squirrels file formal complaints about you"
+  },
+  {
+    "id": 98,
+    "category": "absurd",
+    "a": "Your hair changes colour with your mood",
+    "b": "Your hair grows an inch whenever you lie"
+  },
+  {
+    "id": 99,
+    "category": "absurd",
+    "a": "Objects do what you ask, but sigh first",
+    "b": "Objects talk to you, but they're all exhausted"
+  },
+  {
+    "id": 100,
+    "category": "absurd",
+    "a": "You can summon one sandwich a day, flavour random",
+    "b": "You can summon any drink, but always lukewarm"
+  },
+  {
+    "id": 101,
+    "category": "absurd",
+    "a": "Gravity is 10% weaker for you on Tuesdays",
+    "b": "Time runs 10% slower for you on Sundays"
+  },
+  {
+    "id": 102,
+    "category": "absurd",
+    "a": "A tiny orchestra plays when you enter a room",
+    "b": "A tiny narrator describes your every move, fondly"
+  },
+  {
+    "id": 103,
+    "category": "absurd",
+    "a": "You understand cats, but they only roast you",
+    "b": "You understand dogs, but they overshare wildly"
+  },
+  {
+    "id": 104,
+    "category": "absurd",
+    "a": "Your footsteps leave faint glittery prints",
+    "b": "Your handshakes give a tiny spark of pure joy"
+  },
+  {
+    "id": 105,
+    "category": "absurd",
+    "a": "Everything you draw comes alive, for one minute",
+    "b": "Everything you write comes true, but spelled wrong"
+  },
+  {
+    "id": 106,
+    "category": "absurd",
+    "a": "You turn invisible, but only while sneezing",
+    "b": "You walk through walls, but only while singing"
+  },
+  {
+    "id": 107,
+    "category": "absurd",
+    "a": "Wasps deeply respect you",
+    "b": "Mosquitoes hold a personal grudge against you"
+  },
+  {
+    "id": 108,
+    "category": "absurd",
+    "a": "Your future self texts you cryptic advice",
+    "b": "Your past self leaves slightly out-of-date tips"
+  },
+  {
+    "id": 109,
+    "category": "absurd",
+    "a": "You can breathe underwater, but only sparkling water",
+    "b": "You can walk on clouds, but they're a bit sticky"
+  },
+  {
+    "id": 110,
+    "category": "absurd",
+    "a": "Everyone hears your thoughts as gentle elevator music",
+    "b": "Everyone faintly smells your mood, like a candle"
+  },
+  {
+    "id": 111,
+    "category": "absurd",
+    "a": "You sprout tiny wings that flap when you're happy",
+    "b": "You grow a tail that wags whenever you lie"
+  },
+  {
+    "id": 112,
+    "category": "absurd",
+    "a": "Every mirror shows you in a tiny crown",
+    "b": "Every photo of you has a faint, suspicious glow"
+  },
+  {
+    "id": 113,
+    "category": "absurd",
+    "a": "You can teleport your keys straight to your hand",
+    "b": "You can teleport one lost sock to its pair"
+  },
+  {
+    "id": 114,
+    "category": "absurd",
+    "a": "Plants lean towards you and whisper encouragement",
+    "b": "Clouds form little arrows pointing where to go"
+  },
+  {
+    "id": 115,
+    "category": "absurd",
+    "a": "You hum and nearby machines hum in harmony",
+    "b": "You sigh and nearby lights dim sympathetically"
+  },
+  {
+    "id": 116,
+    "category": "absurd",
+    "a": "Your sneezes teleport you exactly one metre to the left",
+    "b": "Your yawns make everyone nearby yawn, deliberately"
+  },
+  {
+    "id": 117,
+    "category": "absurd",
+    "a": "You turn slightly translucent when embarrassed",
+    "b": "You glow gently when proud"
+  },
+  {
+    "id": 118,
+    "category": "absurd",
+    "a": "You can taste colours, but blue is always a let-down",
+    "b": "You can hear shapes, but circles are far too loud"
+  },
+  {
+    "id": 119,
+    "category": "absurd",
+    "a": "Spiders knit you tiny scarves",
+    "b": "Bees leave you tiny handwritten thank-you notes"
+  },
+  {
+    "id": 120,
+    "category": "absurd",
+    "a": "Your inner monologue has a laugh track",
+    "b": "Your inner monologue is a calm documentary host"
+  },
+  {
+    "id": 121,
+    "category": "absurd",
+    "a": "Pizza always arrives five minutes early but slightly wrong",
+    "b": "Pizza is always exactly right but thirty minutes late"
+  },
+  {
+    "id": 122,
+    "category": "absurd",
+    "a": "You can summon a gentle breeze on demand",
+    "b": "You can summon one dramatic leaf to blow past"
+  },
+  {
+    "id": 123,
+    "category": "absurd",
+    "a": "Every door you open creaks dramatically",
+    "b": "Every light flickers ominously when you enter"
+  },
+  {
+    "id": 124,
+    "category": "absurd",
+    "a": "You can rewind ten seconds, but everyone sees the glitch",
+    "b": "You can skip ten seconds ahead, but lose the memory of it"
+  },
+  {
+    "id": 125,
+    "category": "absurd",
+    "a": "Houseplants applaud quietly when you water them",
+    "b": "Your kettle cheers you on, a little too loudly"
+  }
 ]

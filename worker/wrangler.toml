@@ -28,7 +28,7 @@ new_sqlite_classes = ["TallyObject", "RateLimiter"]
 ALLOWED_ORIGINS = ""
 
 # "false" disables the cold-start baseline (pure real data from vote #1).
-SEED_VOTES = "false"
+SEED_VOTES = "true"
 
 # "false" disables per-IP rate limiting.
 RATE_LIMIT = "true"

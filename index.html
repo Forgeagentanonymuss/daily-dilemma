@@ -8,7 +8,17 @@
   <meta name="theme-color" content="#ece4d6">
   <link rel="preload" href="fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Daily Dilemma">
+  <meta property="og:title" content="The Daily Dilemma — One Impossible Choice Every Day">
+  <meta property="og:description" content="Pick a side. Argue about it later. One impossible would-you-rather every day — with streaks, stats, and the world's split revealed.">
+  <meta property="og:url" content="https://the-daily-dilemma.com">
+  <meta property="og:image" content="https://forgeagentanonymuss.github.io/daily-dilemma/og-image.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Daily Dilemma — One Impossible Choice Every Day">
+  <meta name="twitter:description" content="Pick a side. Argue about it later. One impossible would-you-rather every day.">
+  <meta name="twitter:image" content="https://forgeagentanonymuss.github.io/daily-dilemma/og-image.svg">
   <script>
     window.DD_SHARE_URL = "https://the-daily-dilemma.com";
     window.DD_PREMIUM_URL = "https://www.the-daily-dilemma.com/go-premium";
@@ -24,8 +34,9 @@
     // ── Real vote tallies ──────────────────────────────────────────
     // Paste your deployed Cloudflare Worker URL here to show real,
     // worldwide vote splits. Leave empty to use the built-in local split.
-    // Example: "https://daily-dilemma-votes.yourname.workers.dev"
-    window.DD_VOTE_API = "";
+    window.DD_VOTE_API = "https://daily-dilemma-votes.rookcomps.workers.dev";
+    // Rich link previews for Facebook / X / LinkedIn — same host as DD_VOTE_API.
+    window.DD_SHARE_PREVIEW_API = window.DD_VOTE_API;
   </script>
   <script>
     if (window.self !== window.top) {
@@ -37,6 +48,6 @@
   <main id="app" class="shell" aria-live="polite" role="main">
     <p class="loading">Loading Daily Dilemma…</p>
   </main>
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>

@@ -12,6 +12,27 @@
 (function () {
   var ALLOWED = { "https://forgeagentanonymuss.github.io": true };
   var GAME = "https://forgeagentanonymuss.github.io";
+  var GAME_BASE = GAME + "/daily-dilemma/";
+  var FORWARD_PARAMS = ["r", "share", "reset", "dev"];
+
+  function forwardedGameSearch() {
+    var out = new URLSearchParams();
+    var page = new URLSearchParams(window.location.search);
+    out.set("join", "https://www.the-daily-dilemma.com/go-premium");
+    FORWARD_PARAMS.forEach(function (key) {
+      if (page.has(key)) out.set(key, page.get(key));
+    });
+    return out.toString();
+  }
+
+  function gameFrameSrc() {
+    return GAME_BASE + "?" + forwardedGameSearch();
+  }
+
+  function syncFrameSrc(frame) {
+    var next = gameFrameSrc();
+    if (!frame.src || frame.src !== next) frame.src = next;
+  }
 
   function resizeFrames(height) {
     var h = Math.max(520, Math.min(height, 2400));
@@ -32,6 +53,7 @@
   function wireFrame(frame) {
     if (frame.dataset.ddWired === "1") return;
     frame.dataset.ddWired = "1";
+    syncFrameSrc(frame);
     frame.addEventListener("load", function () {
       requestChildResize(frame);
       setTimeout(function () { requestChildResize(frame); }, 400);

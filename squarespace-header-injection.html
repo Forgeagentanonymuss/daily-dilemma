@@ -2,10 +2,46 @@
      Paste ONLY this file's contents. Must include <script> tags or JS will show as visible text.
      Remove any duplicate script from Footer or page blocks. -->
 
+<!-- Open Graph / Twitter (homepage + default link previews) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Daily Dilemma">
+<meta property="og:title" content="The Daily Dilemma — One Impossible Choice Every Day">
+<meta property="og:description" content="Pick a side. Argue about it later. Free daily would-you-rather with streaks, stats, and real vote splits.">
+<meta property="og:url" content="https://the-daily-dilemma.com">
+<meta property="og:image" content="https://forgeagentanonymuss.github.io/daily-dilemma/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Daily Dilemma — One Impossible Choice Every Day">
+<meta name="twitter:description" content="Pick a side. Argue about it later. Free daily would-you-rather with streaks, stats, and real vote splits.">
+<meta name="twitter:image" content="https://forgeagentanonymuss.github.io/daily-dilemma/og-image.svg">
+<meta name="description" content="Pick a side. Argue about it later. One impossible would-you-rather every day — with streaks, stats, and the world's split revealed.">
+
 <script>
 (function () {
   var ALLOWED = { "https://forgeagentanonymuss.github.io": true };
   var GAME = "https://forgeagentanonymuss.github.io";
+  var GAME_BASE = GAME + "/daily-dilemma/";
+  var FORWARD_PARAMS = ["r", "share", "reset", "dev"];
+
+  function forwardedGameSearch() {
+    var out = new URLSearchParams();
+    var page = new URLSearchParams(window.location.search);
+    out.set("join", "https://www.the-daily-dilemma.com/go-premium");
+    FORWARD_PARAMS.forEach(function (key) {
+      if (page.has(key)) out.set(key, page.get(key));
+    });
+    return out.toString();
+  }
+
+  function gameFrameSrc() {
+    return GAME_BASE + "?" + forwardedGameSearch();
+  }
+
+  function syncFrameSrc(frame) {
+    var next = gameFrameSrc();
+    if (!frame.src || frame.src.split("?")[0] !== GAME_BASE.split("?")[0] || frame.src !== next) {
+      frame.src = next;
+    }
+  }
 
   function resizeFrames(height) {
     var h = Math.max(520, Math.min(height, 2400));
@@ -26,6 +62,7 @@
   function wireFrame(frame) {
     if (frame.dataset.ddWired === "1") return;
     frame.dataset.ddWired = "1";
+    syncFrameSrc(frame);
     frame.addEventListener("load", function () {
       requestChildResize(frame);
       setTimeout(function () { requestChildResize(frame); }, 400);

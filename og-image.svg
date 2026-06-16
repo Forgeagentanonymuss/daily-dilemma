@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="The Daily Dilemma">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ece4d6"/>
+      <stop offset="100%" stop-color="#d8e8df"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#1f2a24" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="72" y="72" width="1056" height="486" rx="36" fill="#fff8e8" filter="url(#shadow)"/>
+  <text x="120" y="190" fill="#4d7d6e" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700">THE DAILY DILEMMA</text>
+  <text x="120" y="290" fill="#1f2a24" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700">Pick a side.</text>
+  <text x="120" y="380" fill="#1f2a24" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700">Argue later.</text>
+  <text x="120" y="470" fill="#5f6f68" font-family="Arial, Helvetica, sans-serif" font-size="34">One impossible would-you-rather every day.</text>
+  <circle cx="980" cy="300" r="110" fill="#f4c95f" opacity="0.35"/>
+  <circle cx="1040" cy="360" r="70" fill="#4d7d6e" opacity="0.18"/>
+  <rect x="760" y="420" width="300" height="72" rx="36" fill="#4d7d6e"/>
+  <text x="910" y="468" text-anchor="middle" fill="#fff8e8" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">Play today</text>
+</svg>

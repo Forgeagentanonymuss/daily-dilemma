@@ -274,8 +274,26 @@ function updateStreak(state, today, opts = {}) {
 
 function shareText(dilemma, choice, pctA, mode = "daily") {
   const picked = choice === "a" ? dilemma.a : dilemma.b;
+  const agreePct = choice === "a" ? pctA : 100 - pctA;
   const prefix = mode === "daily" ? "Daily Dilemma" : "Daily Dilemma Quick Play";
-  return `${prefix} · I picked: "${picked}" (${pctA}% chose A)`;
+  return `${prefix} · I picked: "${picked}" — only ${agreePct}% agreed. Which side are you on?`;
+}
+
+function b64urlEncodeJson(obj) {
+  const json = JSON.stringify(obj);
+  return btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlDecodeJson(token) {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
+    return JSON.parse(decodeURIComponent(escape(atob(b64 + pad))));
+  } catch {
+    return null;
+  }
 }
 
 function normalizeShareSiteUrl(raw) {
@@ -300,17 +318,80 @@ function getShareSiteUrl() {
   return SHARE_SITE_URL;
 }
 
-function buildResultShareUrl() {
-  return normalizeShareSiteUrl(getShareSiteUrl());
+function encodeResultSharePayload(dilemma, choice, pctA, mode = "daily") {
+  const payload = {
+    c: dilemma.category,
+    a: dilemma.a,
+    b: dilemma.b,
+    s: choice === "b" ? "b" : "a",
+    p: Math.max(0, Math.min(100, Math.round(pctA))),
+    m: mode === "daily" ? "d" : "q",
+  };
+  if (isOfficialId(dilemma.id)) payload.i = dilemma.id;
+  return b64urlEncodeJson(payload);
 }
 
-function buildSocialShareUrls(message, url) {
+function decodeResultSharePayload(token) {
+  const data = b64urlDecodeJson(token);
+  if (!data || !SHARE_CATEGORIES.has(data.c)) return null;
+  const a = String(data.a || "").trim();
+  const b = String(data.b || "").trim();
+  if (!a || !b || a.length > 120 || b.length > 120) return null;
+  const side = data.s === "b" ? "b" : "a";
+  const pctA = Math.max(0, Math.min(100, Math.round(Number(data.p) || 50)));
+  const mode = data.m === "q" ? "quick" : "daily";
+  const out = { category: data.c, a, b, side, pctA, mode };
+  if (isOfficialId(data.i)) out.id = data.i;
+  return out;
+}
+
+function getSharePreviewApi() {
+  if (typeof window !== "undefined" && window.DD_SHARE_PREVIEW_API) {
+    return String(window.DD_SHARE_PREVIEW_API).replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined" && window.DD_VOTE_API) {
+    return String(window.DD_VOTE_API).replace(/\/+$/, "");
+  }
+  return "";
+}
+
+function appendShareQuery(baseUrl, key, token) {
+  const url = new URL(baseUrl);
+  url.searchParams.delete("reset");
+  url.searchParams.delete("share");
+  url.searchParams.delete("r");
+  url.searchParams.set(key, token);
+  return url.href;
+}
+
+function buildResultShareUrl(dilemma, choice, pctA, mode = "daily") {
+  const base = normalizeShareSiteUrl(getShareSiteUrl());
+  if (!dilemma || !choice) return base;
+  return appendShareQuery(base, "r", encodeResultSharePayload(dilemma, choice, pctA, mode));
+}
+
+function buildSharePreviewUrl(dilemma, choice, pctA, mode = "daily") {
+  const api = getSharePreviewApi();
+  if (!api || !dilemma || !choice) return buildResultShareUrl(dilemma, choice, pctA, mode);
+  return `${api}/share?r=${encodeURIComponent(encodeResultSharePayload(dilemma, choice, pctA, mode))}`;
+}
+
+function buildCustomSharePreviewUrl(dilemma) {
+  const api = getSharePreviewApi();
+  const siteUrl = buildCustomShareUrl(dilemma);
+  if (!api) return siteUrl;
+  const token = encodeSharePayload(dilemma);
+  return `${api}/share?share=${encodeURIComponent(token)}`;
+}
+
+function buildSocialShareUrls(message, url, previewUrl) {
+  const link = previewUrl || url;
   const payload = `${message}\n\nPlay at: ${url}`;
   return {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
     x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(payload)}`,
     whatsapp: `https://wa.me/?text=${encodeURIComponent(payload)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`,
   };
 }
 
@@ -644,27 +725,16 @@ function dilemmaById(dilemmas, state, id) {
 const SHARE_CATEGORIES = new Set(CATEGORIES.map((c) => c.id));
 
 function encodeSharePayload(dilemma) {
-  const payload = { c: dilemma.category, a: dilemma.a, b: dilemma.b };
-  const json = JSON.stringify(payload);
-  return btoa(unescape(encodeURIComponent(json)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return b64urlEncodeJson({ c: dilemma.category, a: dilemma.a, b: dilemma.b });
 }
 
 function decodeSharePayload(token) {
-  if (!token || typeof token !== "string") return null;
-  try {
-    const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
-    const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
-    const json = decodeURIComponent(escape(atob(b64 + pad)));
-    const data = JSON.parse(json);
-    if (!SHARE_CATEGORIES.has(data.c)) return null;
-    const a = String(data.a || "").trim();
-    const b = String(data.b || "").trim();
-    if (!a || !b || a.length > 120 || b.length > 120) return null;
-    return { category: data.c, a, b };
-  } catch {
-    return null;
-  }
+  const data = b64urlDecodeJson(token);
+  if (!data || !SHARE_CATEGORIES.has(data.c)) return null;
+  const a = String(data.a || "").trim();
+  const b = String(data.b || "").trim();
+  if (!a || !b || a.length > 120 || b.length > 120) return null;
+  return { category: data.c, a, b };
 }
 
 function buildCustomShareUrl(dilemma) {
@@ -1044,7 +1114,7 @@ function finishResultShare(btn, label = "Copied!") {
 
 function buildResultSharePayload(dilemma, choice, pctA, mode) {
   const text = shareText(dilemma, choice, pctA, mode);
-  const url = buildResultShareUrl();
+  const url = buildResultShareUrl(dilemma, choice, pctA, mode);
   return `${text}\n\nPlay at: ${url}`;
 }
 
@@ -1080,13 +1150,15 @@ function socialShareButtonsHtml() {
   </div>`;
 }
 
-function bindSocialShareButtons(backdrop, getPayload, getShareParts) {
+function bindSocialShareButtons(backdrop, getPayload, getShareParts, previewUrl) {
   backdrop.querySelectorAll("[data-social]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const platform = btn.dataset.social;
-      const { message, url } = getShareParts();
+      const parts = getShareParts();
+      const { message, url } = parts;
+      const preview = parts.previewUrl || previewUrl;
       const payload = getPayload();
-      const links = buildSocialShareUrls(message, url);
+      const links = buildSocialShareUrls(message, url, preview);
 
       if (platform === "instagram") {
         copyText(payload, btn, () => {
@@ -1107,7 +1179,8 @@ function bindSocialShareButtons(backdrop, getPayload, getShareParts) {
 
 function showResultShareModal(dilemma, choice, pctA, mode) {
   const message = shareText(dilemma, choice, pctA, mode);
-  const url = buildResultShareUrl();
+  const url = buildResultShareUrl(dilemma, choice, pctA, mode);
+  const previewUrl = buildSharePreviewUrl(dilemma, choice, pctA, mode);
   const payload = buildResultSharePayload(dilemma, choice, pctA, mode);
   const backdrop = openModal("Share your pick", `
     <p class="modal-lead">Send your result to friends — they'll land on <strong>the-daily-dilemma.com</strong>.</p>
@@ -1129,9 +1202,13 @@ function showResultShareModal(dilemma, choice, pctA, mode) {
     const marker = "\n\nPlay at: ";
     const idx = full.lastIndexOf(marker);
     if (idx >= 0) {
-      return { message: full.slice(0, idx), url: full.slice(idx + marker.length) || url };
+      return {
+        message: full.slice(0, idx),
+        url: full.slice(idx + marker.length) || url,
+        previewUrl,
+      };
     }
-    return { message: shareText(dilemma, choice, pctA, mode), url };
+    return { message: shareText(dilemma, choice, pctA, mode), url, previewUrl };
   };
   const selectAll = () => {
     if (!ta) return;
@@ -1145,7 +1222,7 @@ function showResultShareModal(dilemma, choice, pctA, mode) {
   copyBtn?.addEventListener("click", () => {
     copyText(readPayload(), copyBtn, () => finishResultShare(copyBtn), { silentFail: true });
   });
-  bindSocialShareButtons(backdrop, readPayload, getShareParts);
+  bindSocialShareButtons(backdrop, readPayload, getShareParts, previewUrl);
   if (!isEmbedded()) requestAnimationFrame(selectAll);
 }
 
@@ -2024,6 +2101,30 @@ function showShareDilemmaModal(custom) {
   backdrop.querySelector(".share-link-input")?.addEventListener("click", (e) => e.target.select());
 }
 
+function showImportedResultModal(imported) {
+  const picked = imported.side === "a" ? imported.a : imported.b;
+  const agreePct = imported.side === "a" ? imported.pctA : 100 - imported.pctA;
+  const label = imported.mode === "daily" ? "today's dilemma" : "this dilemma";
+  const backdrop = openModal("Your friend picked a side", `
+    <p class="modal-lead">On ${label} they chose <strong>"${escapeHtml(picked)}"</strong> — only ${agreePct}% agreed. What would you pick?</p>
+    <div class="import-preview">
+      <span class="tag tag-sage">${escapeHtml(catLabel(imported.category))}</span>
+      <div class="import-options">
+        <p class="import-opt">${escapeHtml(imported.a)}</p>
+        <p class="import-or" aria-hidden="true">or</p>
+        <p class="import-opt">${escapeHtml(imported.b)}</p>
+      </div>
+    </div>
+    <p class="share-trust-note soft">Pick a side to see how you compare — then start your own streak.</p>`,
+  `<button class="btn ghost" data-close>Not now</button>
+   <button class="btn primary glow" id="playResultImport">${icon("bolt", "ico-btn")} Play this dilemma</button>`);
+  backdrop.querySelector("[data-close]")?.addEventListener("click", () => backdrop.remove());
+  backdrop.querySelector("#playResultImport")?.addEventListener("click", () => {
+    backdrop.remove();
+    playImportedOnce(imported);
+  });
+}
+
 function showImportedShareModal(imported) {
   const backdrop = openModal("A dilemma for you", `
     <p class="modal-lead">Someone shared a custom dilemma with you. Would you like to play it now?</p>
@@ -2137,7 +2238,7 @@ function doShare(btn, dilemma, choice, pctA, mode) {
   }
 
   const text = shareText(d, c, p, mode);
-  const url = buildResultShareUrl();
+  const url = buildResultShareUrl(d, c, p, mode);
   if (typeof navigator !== "undefined" && navigator.share) {
     navigator.share({ title: "Daily Dilemma", text, url })
       .then(() => finishResultShare(btn, "Shared!"))
@@ -2174,9 +2275,16 @@ async function init() {
   }
 
   let pendingImport = null;
+  let pendingResult = null;
   if (params.has("share")) {
     pendingImport = decodeSharePayload(params.get("share"));
     params.delete("share");
+    const qs = params.toString();
+    history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
+  }
+  if (params.has("r")) {
+    pendingResult = decodeResultSharePayload(params.get("r"));
+    params.delete("r");
     const qs = params.toString();
     history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
   }
@@ -2200,7 +2308,9 @@ async function init() {
   initEmbedResize();
   initPremiumBridge();
 
-  if (pendingImport) {
+  if (pendingResult) {
+    requestAnimationFrame(() => showImportedResultModal(pendingResult));
+  } else if (pendingImport) {
     requestAnimationFrame(() => showImportedShareModal(pendingImport));
   }
 }
@@ -2210,8 +2320,10 @@ if (typeof module !== "undefined" && module.exports) {
     dateKey, dayIndex, randomIndex, pseudoSplit, updateStreak, shareText, resetState,
     migrateState, computeStats, computePersonality, getQuickPlayRemaining, dayGap,
     defaultState, ACHIEVEMENTS, QUICK_FREE_LIMIT, resultHeadline, nextStreakMilestone,
-    encodeSharePayload, decodeSharePayload, buildCustomShareUrl, customShareMessage,
-    buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
+    encodeSharePayload, decodeSharePayload, encodeResultSharePayload, decodeResultSharePayload,
+    buildCustomShareUrl, buildCustomSharePreviewUrl, customShareMessage,
+    buildResultShareUrl, buildSharePreviewUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
+    b64urlEncodeJson, b64urlDecodeJson,
     getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
     canStartCategory, ensureCategoryTrialState,
   };

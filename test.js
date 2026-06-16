@@ -6,8 +6,9 @@ const {
   dateKey, dayIndex, randomIndex, pseudoSplit, updateStreak, shareText,
   migrateState, computeStats, computePersonality, getQuickPlayRemaining,
   dayGap, defaultState, QUICK_FREE_LIMIT,
-  encodeSharePayload, decodeSharePayload, customShareMessage,
-  buildResultShareUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
+  encodeSharePayload, decodeSharePayload, encodeResultSharePayload, decodeResultSharePayload,
+  customShareMessage,
+  buildResultShareUrl, buildSharePreviewUrl, getShareSiteUrl, buildSocialShareUrls, normalizeShareSiteUrl,
   getPremiumPaywallUrl, PREMIUM_PRICE_LABEL, PREMIUM_PAYWALL_URL,
   canStartCategory, ensureCategoryTrialState,
 } = require("./app.js");
@@ -49,6 +50,7 @@ assert.equal(updateStreak(state, "2026-06-13", { shieldUsed: true }), 5, "shield
 
 const txt = shareText({ a: "Pizza", b: "Salad" }, "a", 55);
 assert.ok(txt.includes("Pizza"), "share mentions pick");
+assert.ok(txt.includes("Which side are you on?"), "share asks a question");
 
 for (let i = 0; i < 50; i++) {
   const r = randomIndex(10, 3);
@@ -100,15 +102,32 @@ const msg = customShareMessage(sample);
 assert.ok(msg.includes("Duck-sized horse"), "share message mentions dilemma");
 
 assert.equal(getShareSiteUrl(), "https://the-daily-dilemma.com", "default share site");
-assert.equal(buildResultShareUrl(), "https://the-daily-dilemma.com", "result share url is site home");
+assert.equal(buildResultShareUrl(), "https://the-daily-dilemma.com", "bare result share url is site home");
+
+const dilemma = { id: 1, category: "family", a: "Pizza", b: "Salad" };
+const resultToken = encodeResultSharePayload(dilemma, "a", 55, "daily");
+const resultUrl = buildResultShareUrl(dilemma, "a", 55, "daily");
+assert.ok(resultUrl.includes("the-daily-dilemma.com"), "result share uses site domain");
+assert.ok(resultUrl.includes("r="), "result share includes r param");
+const decodedResult = decodeResultSharePayload(resultToken);
+assert.ok(decodedResult, "result token decodes");
+assert.equal(decodedResult.side, "a", "result keeps side");
+assert.equal(decodedResult.pctA, 55, "result keeps split");
+assert.equal(decodedResult.a, "Pizza", "result keeps option A");
+
 assert.equal(normalizeShareSiteUrl("https://the-daily-dilemma.com/play"), "https://the-daily-dilemma.com", "strips /play path");
 assert.equal(normalizeShareSiteUrl("https://www.the-daily-dilemma.com/play/"), "https://www.the-daily-dilemma.com", "strips trailing /play/");
 
-const social = buildSocialShareUrls("Daily Dilemma · I picked Pizza", "https://the-daily-dilemma.com");
-assert.ok(social.facebook.includes("facebook.com/sharer"), "facebook share url");
+const social = buildSocialShareUrls(
+  "Daily Dilemma · I picked Pizza",
+  resultUrl,
+  "https://votes.example.workers.dev/share?r=abc"
+);
+assert.ok(social.facebook.includes("votes.example.workers.dev"), "facebook uses preview url");
 assert.ok(social.whatsapp.includes("wa.me"), "whatsapp share url");
+assert.ok(social.whatsapp.includes("the-daily-dilemma.com"), "whatsapp keeps friendly site url in text");
 assert.ok(social.x.includes("twitter.com/intent/tweet"), "x share url");
-assert.ok(social.linkedin.includes("linkedin.com/sharing"), "linkedin share url");
+assert.ok(social.linkedin.includes("votes.example.workers.dev"), "linkedin uses preview url");
 
 assert.equal(getPremiumPaywallUrl(), PREMIUM_PAYWALL_URL, "default paywall url");
 assert.ok(PREMIUM_PRICE_LABEL.includes("£"), "premium price uses GBP");
